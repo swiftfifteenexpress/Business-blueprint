@@ -1,0 +1,311 @@
+# Swift-Fifteen Express — Operations Blueprint
+## JotForm Order Form + Make.com Automation
+
+---
+
+## PART 1: JOTFORM ORDER FORM STRUCTURE
+
+Build this as a **multi-page form** in JotForm (5 pages). Enable **Save & Continue** so clients don't lose progress on mobile.
+
+Share the form link via WhatsApp after your initial chat with the lead.
+
+---
+
+### PAGE 1 — Sender Details
+
+| Field Name | Field Type | Required | Notes |
+|---|---|---|---|
+| Full Name | Name field (First + Last) | Yes | — |
+| WhatsApp Number | Phone field | Yes | Label it "WhatsApp number" |
+| Email Address | Email field | Yes | Auto-confirmation goes here |
+| Business Name | Short Text | No | Leave blank if individual sender |
+
+---
+
+### PAGE 2 — Pickup Details
+
+| Field Name | Field Type | Required | Notes |
+|---|---|---|---|
+| Pickup Address | Long Text | Yes | Ask for street + area + nearest landmark |
+| Pickup City | Dropdown | Yes | Lagos / Abuja / Port Harcourt / Ibadan / Kano / Other |
+| Pickup Date | Date Picker | Yes | Disable past dates in JotForm settings |
+| Pickup Time Window | Dropdown | Yes | 8–10am / 10am–12pm / 12–3pm / 3–6pm |
+| Alternate Pickup Contact | Phone field | No | "If someone else will hand over the package" |
+
+---
+
+### PAGE 3 — Delivery Details
+
+| Field Name | Field Type | Required | Notes |
+|---|---|---|---|
+| Recipient Full Name | Name field | Yes | — |
+| Recipient Phone | Phone field | Yes | For Glovo + tracking updates |
+| Delivery Address | Long Text | Yes | Street + area + nearest landmark |
+| Delivery City/State | Dropdown | Yes | All 36 states |
+| Delivery Type | Multiple Choice | Yes | Same-day Lagos / Next-day Lagos / Interstate 48hr |
+
+**Conditional Logic Rule (set inside JotForm):**
+- IF Delivery City is NOT Lagos → automatically select "Interstate 48hr" and hide the other two options
+
+---
+
+### PAGE 4 — Package Details
+
+| Field Name | Field Type | Required | Notes |
+|---|---|---|---|
+| Package Type | Dropdown | Yes | Document / Small Parcel / Large Parcel / Fragile Item / Bulk Cargo |
+| Estimated Weight | Multiple Choice | Yes | Under 1kg / 1–5kg / 5–20kg / 20kg+ |
+| Package Description | Short Text | Yes | e.g. "2 pairs of shoes in a cardboard box" — you need this for Glovo |
+| Declared Package Value | Number (NGN) | Yes | Used to calculate insurance cover (up to NGN 500,000) |
+| Special Handling | Checkboxes | No | Fragile / Keep Upright / Keep Dry / Handle with Care |
+
+---
+
+### PAGE 5 — Payment
+
+Set up a **JotForm Products field** with these prices pre-loaded:
+
+| Service | Price |
+|---|---|
+| Same-day delivery Lagos (under 5kg) | NGN 2,500 |
+| Same-day delivery Lagos (5–20kg) | NGN 4,000 |
+| Next-day delivery Lagos (under 5kg) | NGN 1,800 |
+| Next-day delivery Lagos (5–20kg) | NGN 3,000 |
+| Interstate delivery 48hr (base) | NGN 5,000 |
+
+**Payment method options (pick one to start):**
+
+1. **Bank Transfer widget** — zero fees, customer transfers before pickup is confirmed. Best option to start.
+2. **Stripe** — card payments, ~1.4% fee per transaction. Easy to set up.
+3. **Pay on Pickup** — cash or transfer at collection point. Only for trusted repeat clients.
+
+**Recommendation: Start with Bank Transfer. Add Stripe when you hit 30+ orders/month.**
+
+---
+
+### JotForm Settings to Configure
+
+1. **Notifications** → Send notification email to swiftfifteenexpress@gmail.com on every submission
+2. **Autoresponder** → Send confirmation email to the customer with their order summary
+3. **Thank You Page** → Custom message: *"Your order is confirmed! We'll send your rider's details and tracking link to your WhatsApp within 30 minutes."*
+4. **Save & Continue** → Enable so mobile users don't lose their form progress
+5. **Form URL** → Get a short link (JotForm gives you one) — this is what you paste into WhatsApp for every client
+
+---
+
+## PART 2: MAKE.COM AUTOMATION BLUEPRINT
+
+### What this automation does:
+Every time a customer submits the JotForm order form, Make.com automatically:
+1. Captures all the order data
+2. Adds a new row to your Excel/Google Sheet with every detail
+3. Sends you a WhatsApp alert (via WhatsApp Business API or a simple email)
+4. Sends the customer an order confirmation on WhatsApp
+
+---
+
+### Scenario 1: JotForm → Excel (Order Log)
+
+**Steps to build in Make.com:**
+
+```
+TRIGGER: JotForm → Watch Submissions
+    ↓
+ACTION 1: Microsoft Excel → Add a Row
+    ↓
+ACTION 2: (Optional) Send yourself a notification
+```
+
+**Step-by-step:**
+
+1. Open Make.com → Create New Scenario
+2. Click the + button → Search "JotForm" → Select **Watch Submissions**
+   - Connect your JotForm account
+   - Select your Swift-Fifteen Order Form
+   - Set polling interval: Every 15 minutes
+
+3. Add next module → Search "Microsoft Excel" → Select **Add a Row**
+   - Connect your Microsoft account
+   - Select your workbook and sheet
+   - Map the fields (drag from JotForm output to Excel columns):
+
+**Excel Column Mapping:**
+
+| Excel Column | JotForm Field to Map |
+|---|---|
+| Order ID | Submission ID (auto) |
+| Date & Time | Submission Date |
+| Sender Name | First Name + Last Name |
+| Sender Phone | WhatsApp Number |
+| Sender Email | Email Address |
+| Business Name | Business Name |
+| Pickup Address | Pickup Address |
+| Pickup City | Pickup City |
+| Pickup Date | Pickup Date |
+| Pickup Time | Pickup Time Window |
+| Recipient Name | Recipient Full Name |
+| Recipient Phone | Recipient Phone |
+| Delivery Address | Delivery Address |
+| Delivery City | Delivery City/State |
+| Delivery Type | Delivery Type |
+| Package Type | Package Type |
+| Weight | Estimated Weight |
+| Package Description | Package Description |
+| Declared Value (NGN) | Declared Package Value |
+| Special Handling | Special Handling |
+| Amount Paid (NGN) | Payment Amount |
+| Payment Method | Payment Method |
+| Status | Type manually: "New Order" (default) |
+| Tracking Link | Leave blank — you fill this after Glovo |
+| Notes | Leave blank |
+
+4. Click **Run Once** to test — submit a dummy order on JotForm and confirm it appears in Excel
+5. Turn the scenario **ON**
+
+---
+
+### Scenario 2: JotForm → WhatsApp Alert to You
+
+This sends you an instant WhatsApp message every time a new order comes in so you can act fast.
+
+**Simplest method — Email to WhatsApp:**
+
+```
+TRIGGER: JotForm → Watch Submissions
+    ↓
+ACTION: Gmail / Email → Send an Email to yourself
+```
+
+Set the email subject to: `🚚 NEW ORDER — [Sender Name] — [Delivery Type]`
+
+Set the email body to include all key details. You'll receive this email instantly and can open Glovo immediately.
+
+**Better method — WhatsApp via Twilio (when you're ready to upgrade):**
+- Sign up for Twilio → Enable WhatsApp sandbox
+- In Make.com, add Twilio module → Send WhatsApp Message
+- Message template: *"New order from [Name] — Pickup: [Address] — Deliver to: [Recipient] at [Address] — [Delivery Type] — Package: [Description]"*
+
+---
+
+### Scenario 3: Customer WhatsApp Confirmation
+
+After an order is submitted, the customer gets an instant WhatsApp confirmation.
+
+**Simplest method — via your personal WhatsApp:**
+
+```
+TRIGGER: JotForm → Watch Submissions
+    ↓
+ACTION: Gmail → Send Email to customer
+```
+
+Email content (acts as confirmation until you set up WhatsApp API):
+
+> **Subject:** Your Swift-Fifteen Express order is confirmed ✅
+>
+> Hi [First Name],
+>
+> Thank you for your order! Here's your summary:
+> - **Pickup:** [Pickup Address] on [Pickup Date] between [Pickup Time]
+> - **Delivering to:** [Recipient Name] at [Delivery Address]
+> - **Package:** [Package Description]
+> - **Delivery type:** [Delivery Type]
+>
+> Our team will confirm your rider's details and send your live tracking link to your WhatsApp number ([WhatsApp Number]) within 30 minutes of pickup.
+>
+> Questions? WhatsApp us: wa.me/2348029234994
+>
+> — Swift-Fifteen Express Team
+> "Where Speed Meets Safety"
+
+---
+
+### Your Excel Order Sheet Structure
+
+Create a sheet called **"Orders"** with these columns in row 1:
+
+```
+A: Order ID
+B: Date & Time
+C: Sender Name
+D: Sender Phone
+E: Sender Email
+F: Business Name
+G: Pickup Address
+H: Pickup City
+I: Pickup Date
+J: Pickup Time
+K: Recipient Name
+L: Recipient Phone
+M: Delivery Address
+N: Delivery City
+O: Delivery Type
+P: Package Type
+Q: Weight
+R: Package Description
+S: Declared Value (NGN)
+T: Special Handling
+U: Amount Paid (NGN)
+V: Payment Method
+W: Status
+X: Tracking Link
+Y: Notes
+```
+
+**Status column values to use manually:**
+- `New Order` — just came in, not yet placed on Glovo
+- `Placed on Glovo` — you've entered it in the Glovo app
+- `Rider Assigned` — Glovo has assigned a rider
+- `In Transit` — package picked up, en route
+- `Delivered` — confirmed delivery
+- `Issue` — problem with delivery, needs follow-up
+
+---
+
+## PART 3: FULL ORDER FLOW (END TO END)
+
+```
+1. Lead fills your landing page form
+        ↓
+2. Lead gets WhatsApp button → messages you
+        ↓
+3. You qualify: confirm service area, package type, urgency
+        ↓
+4. You send JotForm order link on WhatsApp
+        ↓
+5. Client fills 5-page order form + pays
+        ↓
+6. Make.com fires automatically:
+   → Row added to Excel
+   → You get email/WhatsApp alert
+   → Client gets confirmation email
+        ↓
+7. You open Glovo On-Demand dashboard
+   → Enter pickup address, delivery address, package details
+   → Confirm order
+        ↓
+8. Glovo assigns rider → gives you tracking link
+        ↓
+9. You copy tracking link → send to client on WhatsApp
+        ↓
+10. Package delivered → update Excel status to "Delivered"
+         ↓
+11. (Optional) Send WhatsApp follow-up asking for Google review
+```
+
+---
+
+## QUICK REFERENCE — Tools & Links
+
+| Tool | Purpose | Link |
+|---|---|---|
+| JotForm | Order form | jotform.com |
+| Make.com | Automation | make.com |
+| Glovo On-Demand | Delivery fulfilment | business.glovoapp.com |
+| Microsoft Excel / Google Sheets | Order log | — |
+| WhatsApp Business | Client communication | — |
+
+---
+
+*Swift-Fifteen Express — "Where Speed Meets Safety"*
+*Operations Blueprint v1.0 — Group 15*
