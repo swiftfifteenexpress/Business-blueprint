@@ -1,311 +1,1089 @@
-# Swift-Fifteen Express — Operations Blueprint
-## JotForm Order Form + Make.com Automation
-
----
-
-## PART 1: JOTFORM ORDER FORM STRUCTURE
-
-Build this as a **multi-page form** in JotForm (5 pages). Enable **Save & Continue** so clients don't lose progress on mobile.
-
-Share the form link via WhatsApp after your initial chat with the lead.
-
----
-
-### PAGE 1 — Sender Details
-
-| Field Name | Field Type | Required | Notes |
-|---|---|---|---|
-| Full Name | Name field (First + Last) | Yes | — |
-| WhatsApp Number | Phone field | Yes | Label it "WhatsApp number" |
-| Email Address | Email field | Yes | Auto-confirmation goes here |
-| Business Name | Short Text | No | Leave blank if individual sender |
-
----
-
-### PAGE 2 — Pickup Details
-
-| Field Name | Field Type | Required | Notes |
-|---|---|---|---|
-| Pickup Address | Long Text | Yes | Ask for street + area + nearest landmark |
-| Pickup City | Dropdown | Yes | Lagos / Abuja / Port Harcourt / Ibadan / Kano / Other |
-| Pickup Date | Date Picker | Yes | Disable past dates in JotForm settings |
-| Pickup Time Window | Dropdown | Yes | 8–10am / 10am–12pm / 12–3pm / 3–6pm |
-| Alternate Pickup Contact | Phone field | No | "If someone else will hand over the package" |
-
----
-
-### PAGE 3 — Delivery Details
-
-| Field Name | Field Type | Required | Notes |
-|---|---|---|---|
-| Recipient Full Name | Name field | Yes | — |
-| Recipient Phone | Phone field | Yes | For Glovo + tracking updates |
-| Delivery Address | Long Text | Yes | Street + area + nearest landmark |
-| Delivery City/State | Dropdown | Yes | All 36 states |
-| Delivery Type | Multiple Choice | Yes | Same-day Lagos / Next-day Lagos / Interstate 48hr |
-
-**Conditional Logic Rule (set inside JotForm):**
-- IF Delivery City is NOT Lagos → automatically select "Interstate 48hr" and hide the other two options
-
----
-
-### PAGE 4 — Package Details
-
-| Field Name | Field Type | Required | Notes |
-|---|---|---|---|
-| Package Type | Dropdown | Yes | Document / Small Parcel / Large Parcel / Fragile Item / Bulk Cargo |
-| Estimated Weight | Multiple Choice | Yes | Under 1kg / 1–5kg / 5–20kg / 20kg+ |
-| Package Description | Short Text | Yes | e.g. "2 pairs of shoes in a cardboard box" — you need this for Glovo |
-| Declared Package Value | Number (NGN) | Yes | Used to calculate insurance cover (up to NGN 500,000) |
-| Special Handling | Checkboxes | No | Fragile / Keep Upright / Keep Dry / Handle with Care |
-
----
-
-### PAGE 5 — Payment
-
-Set up a **JotForm Products field** with these prices pre-loaded:
-
-| Service | Price |
-|---|---|
-| Same-day delivery Lagos (under 5kg) | NGN 2,500 |
-| Same-day delivery Lagos (5–20kg) | NGN 4,000 |
-| Next-day delivery Lagos (under 5kg) | NGN 1,800 |
-| Next-day delivery Lagos (5–20kg) | NGN 3,000 |
-| Interstate delivery 48hr (base) | NGN 5,000 |
-
-**Payment method options (pick one to start):**
-
-1. **Bank Transfer widget** — zero fees, customer transfers before pickup is confirmed. Best option to start.
-2. **Stripe** — card payments, ~1.4% fee per transaction. Easy to set up.
-3. **Pay on Pickup** — cash or transfer at collection point. Only for trusted repeat clients.
-
-**Recommendation: Start with Bank Transfer. Add Stripe when you hit 30+ orders/month.**
-
----
-
-### JotForm Settings to Configure
-
-1. **Notifications** → Send notification email to swiftfifteenexpress@gmail.com on every submission
-2. **Autoresponder** → Send confirmation email to the customer with their order summary
-3. **Thank You Page** → Custom message: *"Your order is confirmed! We'll send your rider's details and tracking link to your WhatsApp within 30 minutes."*
-4. **Save & Continue** → Enable so mobile users don't lose their form progress
-5. **Form URL** → Get a short link (JotForm gives you one) — this is what you paste into WhatsApp for every client
-
----
-
-## PART 2: MAKE.COM AUTOMATION BLUEPRINT
-
-### What this automation does:
-Every time a customer submits the JotForm order form, Make.com automatically:
-1. Captures all the order data
-2. Adds a new row to your Excel/Google Sheet with every detail
-3. Sends you a WhatsApp alert (via WhatsApp Business API or a simple email)
-4. Sends the customer an order confirmation on WhatsApp
-
----
-
-### Scenario 1: JotForm → Excel (Order Log)
-
-**Steps to build in Make.com:**
-
-```
-TRIGGER: JotForm → Watch Submissions
-    ↓
-ACTION 1: Microsoft Excel → Add a Row
-    ↓
-ACTION 2: (Optional) Send yourself a notification
-```
-
-**Step-by-step:**
-
-1. Open Make.com → Create New Scenario
-2. Click the + button → Search "JotForm" → Select **Watch Submissions**
-   - Connect your JotForm account
-   - Select your Swift-Fifteen Order Form
-   - Set polling interval: Every 15 minutes
-
-3. Add next module → Search "Microsoft Excel" → Select **Add a Row**
-   - Connect your Microsoft account
-   - Select your workbook and sheet
-   - Map the fields (drag from JotForm output to Excel columns):
-
-**Excel Column Mapping:**
-
-| Excel Column | JotForm Field to Map |
-|---|---|
-| Order ID | Submission ID (auto) |
-| Date & Time | Submission Date |
-| Sender Name | First Name + Last Name |
-| Sender Phone | WhatsApp Number |
-| Sender Email | Email Address |
-| Business Name | Business Name |
-| Pickup Address | Pickup Address |
-| Pickup City | Pickup City |
-| Pickup Date | Pickup Date |
-| Pickup Time | Pickup Time Window |
-| Recipient Name | Recipient Full Name |
-| Recipient Phone | Recipient Phone |
-| Delivery Address | Delivery Address |
-| Delivery City | Delivery City/State |
-| Delivery Type | Delivery Type |
-| Package Type | Package Type |
-| Weight | Estimated Weight |
-| Package Description | Package Description |
-| Declared Value (NGN) | Declared Package Value |
-| Special Handling | Special Handling |
-| Amount Paid (NGN) | Payment Amount |
-| Payment Method | Payment Method |
-| Status | Type manually: "New Order" (default) |
-| Tracking Link | Leave blank — you fill this after Glovo |
-| Notes | Leave blank |
-
-4. Click **Run Once** to test — submit a dummy order on JotForm and confirm it appears in Excel
-5. Turn the scenario **ON**
-
----
-
-### Scenario 2: JotForm → WhatsApp Alert to You
-
-This sends you an instant WhatsApp message every time a new order comes in so you can act fast.
-
-**Simplest method — Email to WhatsApp:**
-
-```
-TRIGGER: JotForm → Watch Submissions
-    ↓
-ACTION: Gmail / Email → Send an Email to yourself
-```
-
-Set the email subject to: `🚚 NEW ORDER — [Sender Name] — [Delivery Type]`
-
-Set the email body to include all key details. You'll receive this email instantly and can open Glovo immediately.
-
-**Better method — WhatsApp via Twilio (when you're ready to upgrade):**
-- Sign up for Twilio → Enable WhatsApp sandbox
-- In Make.com, add Twilio module → Send WhatsApp Message
-- Message template: *"New order from [Name] — Pickup: [Address] — Deliver to: [Recipient] at [Address] — [Delivery Type] — Package: [Description]"*
-
----
-
-### Scenario 3: Customer WhatsApp Confirmation
-
-After an order is submitted, the customer gets an instant WhatsApp confirmation.
-
-**Simplest method — via your personal WhatsApp:**
-
-```
-TRIGGER: JotForm → Watch Submissions
-    ↓
-ACTION: Gmail → Send Email to customer
-```
-
-Email content (acts as confirmation until you set up WhatsApp API):
-
-> **Subject:** Your Swift-Fifteen Express order is confirmed ✅
->
-> Hi [First Name],
->
-> Thank you for your order! Here's your summary:
-> - **Pickup:** [Pickup Address] on [Pickup Date] between [Pickup Time]
-> - **Delivering to:** [Recipient Name] at [Delivery Address]
-> - **Package:** [Package Description]
-> - **Delivery type:** [Delivery Type]
->
-> Our team will confirm your rider's details and send your live tracking link to your WhatsApp number ([WhatsApp Number]) within 30 minutes of pickup.
->
-> Questions? WhatsApp us: wa.me/2348029234994
->
-> — Swift-Fifteen Express Team
-> "Where Speed Meets Safety"
-
----
-
-### Your Excel Order Sheet Structure
-
-Create a sheet called **"Orders"** with these columns in row 1:
-
-```
-A: Order ID
-B: Date & Time
-C: Sender Name
-D: Sender Phone
-E: Sender Email
-F: Business Name
-G: Pickup Address
-H: Pickup City
-I: Pickup Date
-J: Pickup Time
-K: Recipient Name
-L: Recipient Phone
-M: Delivery Address
-N: Delivery City
-O: Delivery Type
-P: Package Type
-Q: Weight
-R: Package Description
-S: Declared Value (NGN)
-T: Special Handling
-U: Amount Paid (NGN)
-V: Payment Method
-W: Status
-X: Tracking Link
-Y: Notes
-```
-
-**Status column values to use manually:**
-- `New Order` — just came in, not yet placed on Glovo
-- `Placed on Glovo` — you've entered it in the Glovo app
-- `Rider Assigned` — Glovo has assigned a rider
-- `In Transit` — package picked up, en route
-- `Delivered` — confirmed delivery
-- `Issue` — problem with delivery, needs follow-up
-
----
-
-## PART 3: FULL ORDER FLOW (END TO END)
-
-```
-1. Lead fills your landing page form
-        ↓
-2. Lead gets WhatsApp button → messages you
-        ↓
-3. You qualify: confirm service area, package type, urgency
-        ↓
-4. You send JotForm order link on WhatsApp
-        ↓
-5. Client fills 5-page order form + pays
-        ↓
-6. Make.com fires automatically:
-   → Row added to Excel
-   → You get email/WhatsApp alert
-   → Client gets confirmation email
-        ↓
-7. You open Glovo On-Demand dashboard
-   → Enter pickup address, delivery address, package details
-   → Confirm order
-        ↓
-8. Glovo assigns rider → gives you tracking link
-        ↓
-9. You copy tracking link → send to client on WhatsApp
-        ↓
-10. Package delivered → update Excel status to "Delivered"
-         ↓
-11. (Optional) Send WhatsApp follow-up asking for Google review
-```
-
----
-
-## QUICK REFERENCE — Tools & Links
-
-| Tool | Purpose | Link |
-|---|---|---|
-| JotForm | Order form | jotform.com |
-| Make.com | Automation | make.com |
-| Glovo On-Demand | Delivery fulfilment | business.glovoapp.com |
-| Microsoft Excel / Google Sheets | Order log | — |
-| WhatsApp Business | Client communication | — |
-
----
-
-*Swift-Fifteen Express — "Where Speed Meets Safety"*
-*Operations Blueprint v1.0 — Group 15*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Swift-Fifteen Express — Operations Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A3C6E;--navy-dark:#0f2444;--navy-mid:#1e4880;
+  --orange:#E8620A;--orange-light:#f97316;--orange-pale:#fff4ed;
+  --white:#ffffff;--off-white:#f8f9fc;
+  --gray-100:#f1f3f7;--gray-200:#e2e6ee;--gray-400:#9ba3b4;
+  --gray-600:#5a6478;--gray-800:#1e2533;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --amber:#b45309;--amber-bg:#fffbeb;
+  --blue-bg:#eff6ff;--blue:#1d4ed8;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --radius:10px;--radius-lg:16px;--radius-xl:24px;
+}
+
+html{scroll-behavior:smooth}
+body{font-family:'Open Sans',sans-serif;background:var(--off-white);color:var(--gray-800);line-height:1.6;font-size:15px}
+
+/* SIDEBAR */
+.layout{display:flex;min-height:100vh}
+.sidebar{
+  width:260px;flex-shrink:0;background:var(--navy-dark);
+  position:fixed;top:0;left:0;bottom:0;overflow-y:auto;
+  display:flex;flex-direction:column;z-index:100;
+  transition:transform 0.3s ease;
+}
+.sidebar-logo{
+  padding:1.5rem 1.25rem 1rem;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.logo-mark{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Montserrat',sans-serif;font-weight:900;
+  font-size:0.85rem;color:white;letter-spacing:-0.01em;
+  text-decoration:none;
+}
+.logo-icon{
+  width:34px;height:34px;background:var(--orange);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.logo-icon svg{width:20px;height:20px;fill:white}
+.logo-text span{display:block;color:var(--orange);font-size:0.7rem;letter-spacing:0.05em;font-weight:600;text-transform:uppercase}
+.sidebar-badge{
+  margin:0.75rem 1.25rem 0;padding:5px 10px;
+  background:rgba(232,98,10,0.15);border:1px solid rgba(232,98,10,0.25);
+  border-radius:6px;font-size:0.7rem;color:rgba(255,255,255,0.6);
+  font-weight:600;letter-spacing:0.05em;text-transform:uppercase;
+}
+
+.nav-section{padding:1rem 0}
+.nav-label{
+  padding:0.35rem 1.25rem;font-size:0.65rem;font-weight:700;
+  color:rgba(255,255,255,0.3);letter-spacing:0.1em;text-transform:uppercase;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:0.6rem 1.25rem;color:rgba(255,255,255,0.6);
+  text-decoration:none;font-size:0.85rem;font-weight:500;
+  cursor:pointer;border:none;background:none;width:100%;text-align:left;
+  transition:all 0.15s;border-left:3px solid transparent;
+}
+.nav-item:hover{color:white;background:rgba(255,255,255,0.06);border-left-color:rgba(232,98,10,0.5)}
+.nav-item.active{color:white;background:rgba(232,98,10,0.12);border-left-color:var(--orange)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:0.7}
+.nav-item.active svg,.nav-item:hover svg{opacity:1}
+
+.sidebar-footer{
+  margin-top:auto;padding:1.25rem;
+  border-top:1px solid rgba(255,255,255,0.08);
+  font-size:0.75rem;color:rgba(255,255,255,0.3);
+}
+
+/* MAIN */
+.main{margin-left:260px;flex:1;min-height:100vh}
+.topbar{
+  background:white;border-bottom:1px solid var(--gray-200);
+  padding:0 2rem;height:60px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1rem;color:var(--navy)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.status-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--green-bg);color:var(--green);
+  padding:5px 12px;border-radius:100px;font-size:0.75rem;font-weight:600;
+}
+.status-pill::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px}
+.hamburger svg{width:22px;height:22px;stroke:var(--navy);fill:none;stroke-width:2}
+
+/* CONTENT */
+.content{padding:2rem}
+.section{display:none}
+.section.active{display:block}
+
+/* HERO BANNER */
+.hero-banner{
+  background:var(--navy);border-radius:var(--radius-xl);
+  padding:2rem 2.5rem;margin-bottom:1.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:2rem;overflow:hidden;position:relative;
+}
+.hero-banner::after{
+  content:'';position:absolute;right:-60px;top:-60px;
+  width:280px;height:280px;
+  background:radial-gradient(circle,rgba(232,98,10,0.15) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-banner h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:1.6rem;color:white;line-height:1.2;margin-bottom:0.5rem}
+.hero-banner h1 em{color:var(--orange);font-style:normal}
+.hero-banner p{color:rgba(255,255,255,0.6);font-size:0.88rem;font-weight:300;max-width:420px}
+.hero-stats{display:flex;gap:2rem;margin-top:1.5rem;flex-wrap:wrap}
+.hero-stat strong{display:block;font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.4rem;color:var(--orange)}
+.hero-stat span{font-size:0.75rem;color:rgba(255,255,255,0.45)}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:white;border-radius:var(--radius-lg);padding:1.25rem;border:1px solid var(--gray-200)}
+.stat-card .label{font-size:0.75rem;color:var(--gray-400);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px}
+.stat-card .value{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.5rem;color:var(--navy)}
+.stat-card .sub{font-size:0.75rem;color:var(--gray-400);margin-top:3px}
+.stat-card.orange .value{color:var(--orange)}
+
+/* CARDS */
+.card{background:white;border-radius:var(--radius-lg);border:1px solid var(--gray-200);margin-bottom:1.25rem;overflow:hidden}
+.card-header{
+  padding:1rem 1.5rem;border-bottom:1px solid var(--gray-200);
+  display:flex;align-items:center;gap:12px;
+}
+.card-header h2{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1rem;color:var(--navy)}
+.card-header p{font-size:0.8rem;color:var(--gray-400);margin-top:1px}
+.card-icon{
+  width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.ci-orange{background:var(--orange-pale)}
+.ci-navy{background:#e8f0fb}
+.ci-green{background:var(--green-bg)}
+.ci-amber{background:var(--amber-bg)}
+.card-icon svg{width:20px;height:20px;stroke-width:2;fill:none}
+.ci-orange svg{stroke:var(--orange)}
+.ci-navy svg{stroke:var(--navy)}
+.ci-green svg{stroke:var(--green)}
+.ci-amber svg{stroke:var(--amber)}
+.card-body{padding:1.25rem 1.5rem}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:0.85rem}
+th{background:var(--gray-100);color:var(--gray-600);font-weight:700;font-size:0.72rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.6rem 1rem;text-align:left;border-bottom:1px solid var(--gray-200)}
+td{padding:0.65rem 1rem;border-bottom:1px solid var(--gray-100);color:var(--gray-800);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--off-white)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:0.7rem;font-weight:700;letter-spacing:0.02em}
+.badge-req{background:var(--red-bg);color:var(--red)}
+.badge-opt{background:var(--gray-100);color:var(--gray-600)}
+.badge-rec{background:var(--green-bg);color:var(--green)}
+.badge-new{background:#eff6ff;color:var(--blue)}
+.badge-page{background:var(--orange-pale);color:var(--orange)}
+
+/* FLOW */
+.flow{display:flex;flex-direction:column;gap:0}
+.flow-step{display:flex;gap:1rem;position:relative}
+.flow-step:not(:last-child)::before{
+  content:'';position:absolute;left:18px;top:40px;bottom:-20px;
+  width:2px;background:var(--gray-200);z-index:0;
+}
+.flow-num{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.85rem;
+  position:relative;z-index:1;margin-top:4px;
+}
+.fn-orange{background:var(--orange);color:white}
+.fn-navy{background:var(--navy);color:white}
+.fn-green{background:var(--green);color:white}
+.fn-gray{background:var(--gray-200);color:var(--gray-600)}
+.flow-body{padding-bottom:1.5rem;flex:1}
+.flow-body h3{font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.95rem;color:var(--navy);margin-bottom:4px}
+.flow-body p{font-size:0.85rem;color:var(--gray-600);line-height:1.6}
+.flow-body .tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tool-tag{display:inline-block;background:var(--navy);color:white;font-size:0.7rem;font-weight:600;padding:3px 10px;border-radius:100px;letter-spacing:0.03em}
+.tool-tag.orange{background:var(--orange)}
+.tool-tag.green{background:var(--green)}
+.tool-tag.gray{background:var(--gray-200);color:var(--gray-600)}
+
+/* ALERT */
+.alert{display:flex;gap:12px;padding:1rem 1.25rem;border-radius:var(--radius);margin-bottom:1rem;font-size:0.85rem}
+.alert-blue{background:var(--blue-bg);border-left:3px solid var(--blue);color:var(--blue)}
+.alert-amber{background:var(--amber-bg);border-left:3px solid var(--amber);color:var(--amber)}
+.alert-green{background:var(--green-bg);border-left:3px solid var(--green);color:var(--green)}
+.alert svg{width:18px;height:18px;flex-shrink:0;stroke-width:2;fill:none;margin-top:1px}
+.alert p{line-height:1.5;color:var(--gray-800)}
+.alert strong{font-weight:600}
+
+/* STATUS TRACKER */
+.status-track{display:flex;gap:0.5rem;flex-wrap:wrap;margin:1rem 0}
+.status-chip{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:100px;font-size:0.78rem;font-weight:600;
+  border:1.5px solid;cursor:default;
+}
+.sc-new{background:#eff6ff;color:var(--blue);border-color:#bfdbfe}
+.sc-glovo{background:var(--orange-pale);color:var(--orange);border-color:#fed7aa}
+.sc-transit{background:var(--amber-bg);color:var(--amber);border-color:#fcd34d}
+.sc-done{background:var(--green-bg);color:var(--green);border-color:#86efac}
+.sc-issue{background:var(--red-bg);color:var(--red);border-color:#fca5a5}
+
+/* MAKE STEPS */
+.make-step{
+  background:var(--gray-100);border-radius:var(--radius);
+  padding:1rem 1.25rem;margin-bottom:0.75rem;
+  display:flex;align-items:flex-start;gap:1rem;
+}
+.make-step-icon{
+  width:32px;height:32px;border-radius:8px;background:white;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  border:1px solid var(--gray-200);font-size:0.75rem;font-weight:800;
+  color:var(--navy);font-family:'Montserrat',sans-serif;
+}
+.make-step-body h4{font-weight:700;font-size:0.88rem;color:var(--gray-800);margin-bottom:2px}
+.make-step-body p{font-size:0.8rem;color:var(--gray-600);line-height:1.5}
+.make-arrow{text-align:center;color:var(--gray-400);font-size:1.2rem;margin:-2px 0;line-height:1}
+
+/* EXCEL TABLE */
+.excel-col{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:1rem}
+.excel-cell{
+  background:var(--gray-100);border:1px solid var(--gray-200);
+  border-radius:6px;padding:8px 10px;
+  font-size:0.75rem;font-weight:600;color:var(--gray-800);
+  display:flex;align-items:center;gap:6px;
+}
+.excel-cell .col-letter{
+  width:22px;height:22px;background:var(--navy);color:white;
+  border-radius:4px;display:flex;align-items:center;justify-content:center;
+  font-size:0.65rem;font-weight:800;flex-shrink:0;
+}
+.excel-cell.manual .col-letter{background:var(--orange)}
+
+/* GRID 2COL */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
+
+/* TOOL LINK */
+.tool-link{
+  display:flex;align-items:center;gap:12px;
+  background:white;border:1px solid var(--gray-200);border-radius:var(--radius);
+  padding:1rem 1.25rem;text-decoration:none;color:var(--gray-800);
+  transition:all 0.15s;
+}
+.tool-link:hover{border-color:var(--orange);box-shadow:0 2px 12px rgba(232,98,10,0.08)}
+.tool-link-icon{width:40px;height:40px;border-radius:10px;background:var(--orange-pale);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tool-link-icon svg{width:22px;height:22px;stroke:var(--orange);stroke-width:2;fill:none}
+.tool-link h4{font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.88rem;color:var(--navy)}
+.tool-link p{font-size:0.78rem;color:var(--gray-400);margin-top:1px}
+.tool-link .arrow{margin-left:auto;color:var(--gray-400);font-size:1.1rem}
+
+/* PRICING TABLE */
+.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:0.75rem}
+.price-card{border-radius:var(--radius);padding:1.1rem;border:1px solid var(--gray-200)}
+.price-card.featured{border-color:var(--orange);background:var(--orange-pale)}
+.price-card .service{font-size:0.78rem;font-weight:600;color:var(--gray-600);margin-bottom:4px}
+.price-card .amount{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.3rem;color:var(--navy)}
+.price-card.featured .amount{color:var(--orange)}
+.price-card .note{font-size:0.72rem;color:var(--gray-400);margin-top:3px}
+
+/* MOBILE OVERLAY */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:90}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .main{margin-left:0}
+  .hamburger{display:block}
+  .topbar{padding:0 1rem}
+  .content{padding:1rem}
+  .hero-banner{padding:1.5rem;flex-direction:column;gap:1rem}
+  .hero-stats{gap:1.25rem}
+  .grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="#" class="logo-mark">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="logo-text">
+        SWIFT-FIFTEEN<span>EXPRESS</span>
+      </div>
+    </a>
+    <div class="sidebar-badge">Internal Ops Hub</div>
+  </div>
+
+  <nav class="nav-section">
+    <div class="nav-label">Overview</div>
+    <button class="nav-item active" onclick="showSection('overview',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="showSection('flow',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Full Order Flow
+    </button>
+
+    <div class="nav-label">Order Form</div>
+    <button class="nav-item" onclick="showSection('jotform',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      JotForm Structure
+    </button>
+    <button class="nav-item" onclick="showSection('pricing',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Pricing
+    </button>
+
+    <div class="nav-label">Automation</div>
+    <button class="nav-item" onclick="showSection('make',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      Make.com Scenarios
+    </button>
+    <button class="nav-item" onclick="showSection('excel',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      Excel Order Sheet
+    </button>
+
+    <div class="nav-label">Fulfilment</div>
+    <button class="nav-item" onclick="showSection('glovo',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Glovo Fulfilment
+    </button>
+    <button class="nav-item" onclick="showSection('status',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Order Statuses
+    </button>
+
+    <div class="nav-label">Resources</div>
+    <button class="nav-item" onclick="showSection('tools',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+      Tools & Links
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div>"Where Speed Meets Safety"</div>
+    <div style="margin-top:4px;color:rgba(255,255,255,0.2)">v1.0 — Internal use only</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" onclick="openSidebar()" aria-label="Open menu">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <div class="status-pill">Operations Active</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ===================== OVERVIEW ===================== -->
+    <div class="section active" id="section-overview">
+      <div class="hero-banner">
+        <div>
+          <h1>Swift-Fifteen Express<br/><em>Operations Hub</em></h1>
+          <p>Everything your team needs to run the business — from receiving a lead to delivering a package. Read this before you handle your first order.</p>
+          <div class="hero-stats">
+            <div class="hero-stat"><strong>5</strong><span>Form pages</span></div>
+            <div class="hero-stat"><strong>3</strong><span>Automations</span></div>
+            <div class="hero-stat"><strong>11</strong><span>Steps per order</span></div>
+            <div class="hero-stat"><strong>30min</strong><span>Target response time</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-blue">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p><strong>How to use this hub:</strong> Use the sidebar to navigate between sections. Start with <strong>Full Order Flow</strong> to understand the big picture, then read each section in detail before handling your first order.</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="label">Landing Page</div>
+          <div class="value">Live ✓</div>
+          <div class="sub">Captures leads 24/7</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="label">Order Form</div>
+          <div class="value">JotForm</div>
+          <div class="sub">5-page order flow</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Automation</div>
+          <div class="value">Make.com</div>
+          <div class="sub">Auto-logs every order</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Fulfilment</div>
+          <div class="value">Glovo</div>
+          <div class="sub">On-demand dashboard</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-orange"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+            <div><h2>Lead Comes In</h2><p>From landing page or direct WhatsApp</p></div>
+          </div>
+          <div class="card-body" style="font-size:0.85rem;color:var(--gray-600)">
+            <p>1. Lead fills form on landing page → WhatsApp button fires</p>
+            <p style="margin-top:6px">2. <strong>Respond within 30 minutes</strong> on WhatsApp</p>
+            <p style="margin-top:6px">3. Qualify: confirm area, package type, timing</p>
+            <p style="margin-top:6px">4. Send JotForm order link on WhatsApp</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-green"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+            <div><h2>Order is Placed</h2><p>After JotForm submission + payment</p></div>
+          </div>
+          <div class="card-body" style="font-size:0.85rem;color:var(--gray-600)">
+            <p>1. Make.com auto-logs order to Excel</p>
+            <p style="margin-top:6px">2. You receive email/WhatsApp alert</p>
+            <p style="margin-top:6px">3. Open Glovo dashboard → enter order details</p>
+            <p style="margin-top:6px">4. Copy tracking link → send to client via WhatsApp</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-navy"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div><h2>Core Business Rules</h2><p>Every team member must know these</p></div>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Response time</strong></td><td>Reply to every WhatsApp lead within 30 minutes — no exceptions</td></tr>
+              <tr><td><strong>Tracking link</strong></td><td>Send Glovo tracking link to client the moment a rider is assigned</td></tr>
+              <tr><td><strong>Excel update</strong></td><td>Update order status in Excel at every stage — Make.com handles the initial entry, you handle status updates</td></tr>
+              <tr><td><strong>Payment first</strong></td><td>Do not place any Glovo order until payment is confirmed</td></tr>
+              <tr><td><strong>Insurance</strong></td><td>Every package is insured up to NGN 500,000 — always communicate this to clients</td></tr>
+              <tr><td><strong>Complaints</strong></td><td>Address any delivery complaint publicly within 1 hour on WhatsApp or social media</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== FULL FLOW ===================== -->
+    <div class="section" id="section-flow">
+      <div class="alert alert-blue">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p>This is the complete journey — from the moment a visitor lands on the website to the package being delivered. Every team member should know all 11 steps.</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-orange"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div><h2>End-to-End Order Flow</h2><p>11 steps from lead to delivery</p></div>
+        </div>
+        <div class="card-body">
+          <div class="flow">
+            <div class="flow-step">
+              <div class="flow-num fn-orange">1</div>
+              <div class="flow-body">
+                <h3>Visitor lands on the website</h3>
+                <p>Customer finds Swift-Fifteen Express via Instagram, Facebook, Google, or referral. They land on the landing page and see the hero section with the lead capture form.</p>
+                <div class="tools"><span class="tool-tag">Landing Page</span><span class="tool-tag gray">GitHub Pages</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-orange">2</div>
+              <div class="flow-body">
+                <h3>Lead fills the registration form</h3>
+                <p>Visitor enters their name, business name, phone, email, monthly shipments, and business type. They click "Register & Claim 50% Off".</p>
+                <div class="tools"><span class="tool-tag">Landing Page Form</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-orange">3</div>
+              <div class="flow-body">
+                <h3>Lead data is sent to Excel automatically</h3>
+                <p>Make.com captures the form submission and adds a row to the Leads sheet in Excel. You receive an instant notification.</p>
+                <div class="tools"><span class="tool-tag orange">Make.com</span><span class="tool-tag">Excel</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-orange">4</div>
+              <div class="flow-body">
+                <h3>Lead messages on WhatsApp</h3>
+                <p>After form submission, a WhatsApp button appears pre-filled with the lead's name and business. They tap it → message lands on 08029234994. <strong>Respond within 30 minutes.</strong></p>
+                <div class="tools"><span class="tool-tag green">WhatsApp Business</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-navy">5</div>
+              <div class="flow-body">
+                <h3>Qualify the lead on WhatsApp</h3>
+                <p>Confirm: pickup area, delivery destination, package type, and urgency. If it's a valid order, proceed. If outside service area, politely explain coverage and offer interstate option.</p>
+                <div class="tools"><span class="tool-tag green">WhatsApp Business</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-navy">6</div>
+              <div class="flow-body">
+                <h3>Send the JotForm order link</h3>
+                <p>Paste the JotForm link in WhatsApp. Say: <em>"To place your order, please fill this quick form — it takes 2 minutes and payment is collected securely at the end."</em></p>
+                <div class="tools"><span class="tool-tag">JotForm</span><span class="tool-tag green">WhatsApp</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-navy">7</div>
+              <div class="flow-body">
+                <h3>Client fills the 5-page order form and pays</h3>
+                <p>Client enters all pickup/delivery details, package info, and completes payment via bank transfer or card. Make.com auto-logs the full order to Excel immediately.</p>
+                <div class="tools"><span class="tool-tag">JotForm</span><span class="tool-tag orange">Make.com</span><span class="tool-tag">Excel</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-navy">8</div>
+              <div class="flow-body">
+                <h3>Place the order on Glovo On-Demand</h3>
+                <p>Open Glovo On-Demand dashboard. Enter: pickup address, delivery address, recipient name + phone, package description. Confirm the order. Glovo assigns a rider.</p>
+                <div class="tools"><span class="tool-tag orange">Glovo On-Demand</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-green">9</div>
+              <div class="flow-body">
+                <h3>Send tracking link to client</h3>
+                <p>Copy the Glovo tracking link the moment a rider is assigned. Paste it to the client on WhatsApp: <em>"Your rider is on the way! Track your package in real time here: [link]"</em>. Update Excel: status → "In Transit".</p>
+                <div class="tools"><span class="tool-tag green">WhatsApp</span><span class="tool-tag">Excel</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-green">10</div>
+              <div class="flow-body">
+                <h3>Package delivered — confirm and update</h3>
+                <p>Glovo sends delivery confirmation. Update Excel status to "Delivered". Send client a WhatsApp message confirming delivery and asking if everything is okay.</p>
+                <div class="tools"><span class="tool-tag">Excel</span><span class="tool-tag green">WhatsApp</span></div>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-green">11</div>
+              <div class="flow-body">
+                <h3>Request a Google review</h3>
+                <p>24 hours after delivery, send: <em>"Hi [Name], we hope your delivery arrived safely! If you're happy with the service, a quick Google review helps us grow: [Google review link]. Thank you!"</em></p>
+                <div class="tools"><span class="tool-tag green">WhatsApp</span><span class="tool-tag gray">Google Business</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== JOTFORM ===================== -->
+    <div class="section" id="section-jotform">
+      <div class="alert alert-blue">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p>Build this as a <strong>multi-page form</strong> in JotForm (5 pages). Enable <strong>Save &amp; Continue</strong> so clients don't lose progress on mobile. Each section below = one page.</p>
+      </div>
+
+      <!-- PAGE 1 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-orange"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div><h2>Page 1 — Sender Details</h2><p>Who is placing the order?</p></div>
+          <span class="badge badge-page" style="margin-left:auto">Page 1/5</span>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Field Name</th><th>Field Type</th><th>Required</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Full Name</td><td>Name field (First + Last)</td><td><span class="badge badge-req">Required</span></td><td>—</td></tr>
+              <tr><td>WhatsApp Number</td><td>Phone field</td><td><span class="badge badge-req">Required</span></td><td>Label it "WhatsApp number preferred"</td></tr>
+              <tr><td>Email Address</td><td>Email field</td><td><span class="badge badge-req">Required</span></td><td>Auto-confirmation email goes here</td></tr>
+              <tr><td>Business Name</td><td>Short Text</td><td><span class="badge badge-opt">Optional</span></td><td>Leave blank if individual sender</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 2 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-orange"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div><h2>Page 2 — Pickup Details</h2><p>Where are we collecting from?</p></div>
+          <span class="badge badge-page" style="margin-left:auto">Page 2/5</span>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Field Name</th><th>Field Type</th><th>Required</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Pickup Address</td><td>Long Text</td><td><span class="badge badge-req">Required</span></td><td>Ask for: street + area + nearest landmark</td></tr>
+              <tr><td>Pickup City</td><td>Dropdown</td><td><span class="badge badge-req">Required</span></td><td>Lagos / Abuja / Port Harcourt / Ibadan / Kano / Other</td></tr>
+              <tr><td>Pickup Date</td><td>Date Picker</td><td><span class="badge badge-req">Required</span></td><td>Disable past dates in JotForm settings</td></tr>
+              <tr><td>Pickup Time Window</td><td>Dropdown</td><td><span class="badge badge-req">Required</span></td><td>8–10am / 10am–12pm / 12–3pm / 3–6pm</td></tr>
+              <tr><td>Alternate Pickup Contact</td><td>Phone field</td><td><span class="badge badge-opt">Optional</span></td><td>If someone else will hand over the package</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 3 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-navy"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+          <div><h2>Page 3 — Delivery Details</h2><p>Where are we delivering to?</p></div>
+          <span class="badge badge-page" style="margin-left:auto">Page 3/5</span>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Field Name</th><th>Field Type</th><th>Required</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Recipient Full Name</td><td>Name field</td><td><span class="badge badge-req">Required</span></td><td>—</td></tr>
+              <tr><td>Recipient Phone</td><td>Phone field</td><td><span class="badge badge-req">Required</span></td><td>Used by Glovo rider for contact</td></tr>
+              <tr><td>Delivery Address</td><td>Long Text</td><td><span class="badge badge-req">Required</span></td><td>Street + area + nearest landmark</td></tr>
+              <tr><td>Delivery City/State</td><td>Dropdown</td><td><span class="badge badge-req">Required</span></td><td>All 36 states listed</td></tr>
+              <tr><td>Delivery Type</td><td>Multiple Choice</td><td><span class="badge badge-req">Required</span></td><td>Same-day Lagos / Next-day Lagos / Interstate 48hr</td></tr>
+            </tbody>
+          </table>
+          <div class="alert alert-amber" style="margin-top:1rem;margin-bottom:0">
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <p><strong>Conditional Logic (set in JotForm):</strong> If Delivery City is NOT Lagos → automatically select "Interstate 48hr" and hide Same-day / Next-day options.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 4 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-amber"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></div>
+          <div><h2>Page 4 — Package Details</h2><p>What are we picking up?</p></div>
+          <span class="badge badge-page" style="margin-left:auto">Page 4/5</span>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Field Name</th><th>Field Type</th><th>Required</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Package Type</td><td>Dropdown</td><td><span class="badge badge-req">Required</span></td><td>Document / Small Parcel / Large Parcel / Fragile Item / Bulk Cargo</td></tr>
+              <tr><td>Estimated Weight</td><td>Multiple Choice</td><td><span class="badge badge-req">Required</span></td><td>Under 1kg / 1–5kg / 5–20kg / 20kg+</td></tr>
+              <tr><td>Package Description</td><td>Short Text</td><td><span class="badge badge-req">Required</span></td><td>e.g. "2 pairs of shoes in a box" — needed for Glovo entry</td></tr>
+              <tr><td>Declared Package Value</td><td>Number (NGN)</td><td><span class="badge badge-req">Required</span></td><td>Used to calculate insurance cover (max NGN 500,000)</td></tr>
+              <tr><td>Special Handling</td><td>Checkboxes</td><td><span class="badge badge-opt">Optional</span></td><td>Fragile / Keep Upright / Keep Dry / Handle with Care</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE 5 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-green"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+          <div><h2>Page 5 — Payment</h2><p>Secure payment collection</p></div>
+          <span class="badge badge-page" style="margin-left:auto">Page 5/5</span>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Method</th><th>Recommended?</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Bank Transfer</strong></td><td><span class="badge badge-rec">Recommended</span></td><td>JotForm bank transfer widget — zero fees, instant confirmation</td></tr>
+              <tr><td>Stripe (card)</td><td>—</td><td>~1.4% fee per transaction. Add when volume grows.</td></tr>
+              <tr><td>Pay on Pickup</td><td>—</td><td>Cash/transfer at collection. Only for trusted repeat clients.</td></tr>
+            </tbody>
+          </table>
+          <div class="alert alert-green" style="margin-top:1rem;margin-bottom:0">
+            <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            <p><strong>JotForm Settings to enable:</strong> Notification email to swiftfifteenexpress@gmail.com on every submission. Autoresponder email to customer with order summary. Thank-you page: "Your order is confirmed! Tracking link will be sent to your WhatsApp within 30 minutes."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PRICING ===================== -->
+    <div class="section" id="section-pricing">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-orange"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+          <div><h2>Service Pricing</h2><p>Pre-load these in the JotForm Products field</p></div>
+        </div>
+        <div class="card-body">
+          <div class="price-grid">
+            <div class="price-card featured">
+              <div class="service">Same-day Lagos (under 5kg)</div>
+              <div class="amount">₦2,500</div>
+              <div class="note">Within Lagos only</div>
+            </div>
+            <div class="price-card featured">
+              <div class="service">Same-day Lagos (5–20kg)</div>
+              <div class="amount">₦4,000</div>
+              <div class="note">Within Lagos only</div>
+            </div>
+            <div class="price-card">
+              <div class="service">Next-day Lagos (under 5kg)</div>
+              <div class="amount">₦1,800</div>
+              <div class="note">Within Lagos only</div>
+            </div>
+            <div class="price-card">
+              <div class="service">Next-day Lagos (5–20kg)</div>
+              <div class="amount">₦3,000</div>
+              <div class="note">Within Lagos only</div>
+            </div>
+            <div class="price-card">
+              <div class="service">Interstate 48hr (base)</div>
+              <div class="amount">₦5,000</div>
+              <div class="note">+ ₦500/kg over 5kg</div>
+            </div>
+          </div>
+          <div class="alert alert-amber" style="margin-top:1.25rem;margin-bottom:0">
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <p>These are starting prices. For bulk cargo (20kg+) or high-volume business clients, quote manually on WhatsApp after confirming details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== MAKE.COM ===================== -->
+    <div class="section" id="section-make">
+      <div class="alert alert-blue">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p>Build all 3 scenarios in Make.com. Scenario 1 is most critical — set it up first and test with a dummy order before going live.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-orange"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div><h2>Scenario 1 — JotForm → Excel</h2><p>Auto-logs every order into your spreadsheet</p></div>
+          <span class="badge badge-rec" style="margin-left:auto">Build first</span>
+        </div>
+        <div class="card-body">
+          <div class="make-step">
+            <div class="make-step-icon">T</div>
+            <div class="make-step-body"><h4>Trigger: JotForm → Watch Submissions</h4><p>Connect JotForm account → select Swift-Fifteen order form → polling every 15 minutes</p></div>
+          </div>
+          <div class="make-arrow">↓</div>
+          <div class="make-step">
+            <div class="make-step-icon">A</div>
+            <div class="make-step-body"><h4>Action: Microsoft Excel → Add a Row</h4><p>Connect Microsoft account → select your workbook → select "Orders" sheet → map all 25 fields (see Excel section)</p></div>
+          </div>
+          <div class="alert alert-green" style="margin-top:1rem;margin-bottom:0">
+            <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/></svg>
+            <p>Test: submit a dummy order in JotForm → click "Run Once" in Make.com → confirm the row appears in Excel.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-navy"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.63A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+          <div><h2>Scenario 2 — Alert to You</h2><p>Instant notification when a new order lands</p></div>
+        </div>
+        <div class="card-body">
+          <div class="make-step">
+            <div class="make-step-icon">T</div>
+            <div class="make-step-body"><h4>Trigger: JotForm → Watch Submissions</h4><p>Same trigger as Scenario 1</p></div>
+          </div>
+          <div class="make-arrow">↓</div>
+          <div class="make-step">
+            <div class="make-step-icon">A</div>
+            <div class="make-step-body">
+              <h4>Action: Gmail → Send Email</h4>
+              <p><strong>To:</strong> swiftfifteenexpress@gmail.com<br/>
+              <strong>Subject:</strong> 🚚 NEW ORDER — [Sender Name] — [Delivery Type]<br/>
+              <strong>Body:</strong> Pickup: [Address] | Deliver to: [Recipient] at [Address] | Package: [Description] | Paid: ₦[Amount]</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-green"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+          <div><h2>Scenario 3 — Customer Confirmation</h2><p>Auto-email sent to every customer on order</p></div>
+        </div>
+        <div class="card-body">
+          <div class="make-step">
+            <div class="make-step-icon">T</div>
+            <div class="make-step-body"><h4>Trigger: JotForm → Watch Submissions</h4><p>Same trigger — runs in parallel with Scenario 1 &amp; 2</p></div>
+          </div>
+          <div class="make-arrow">↓</div>
+          <div class="make-step">
+            <div class="make-step-icon">A</div>
+            <div class="make-step-body">
+              <h4>Action: Gmail → Send Email to Customer</h4>
+              <p><strong>Subject:</strong> Your Swift-Fifteen Express order is confirmed ✅<br/>
+              Include: sender name, pickup address + date + time, recipient name + delivery address, package description, delivery type, and WhatsApp contact wa.me/2348029234994</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== EXCEL ===================== -->
+    <div class="section" id="section-excel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-green"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></div>
+          <div><h2>Excel Order Sheet — "Orders" Tab</h2><p>Create these columns in Row 1. Make.com fills A–V automatically.</p></div>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-amber" style="margin-bottom:1rem">
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <p>Orange columns (W, X, Y) are filled manually by the team. All others are auto-populated by Make.com.</p>
+          </div>
+          <div class="excel-col">
+            <div class="excel-cell"><div class="col-letter">A</div>Order ID</div>
+            <div class="excel-cell"><div class="col-letter">B</div>Date &amp; Time</div>
+            <div class="excel-cell"><div class="col-letter">C</div>Sender Name</div>
+            <div class="excel-cell"><div class="col-letter">D</div>Sender Phone</div>
+            <div class="excel-cell"><div class="col-letter">E</div>Sender Email</div>
+            <div class="excel-cell"><div class="col-letter">F</div>Business Name</div>
+            <div class="excel-cell"><div class="col-letter">G</div>Pickup Address</div>
+            <div class="excel-cell"><div class="col-letter">H</div>Pickup City</div>
+            <div class="excel-cell"><div class="col-letter">I</div>Pickup Date</div>
+            <div class="excel-cell"><div class="col-letter">J</div>Pickup Time</div>
+            <div class="excel-cell"><div class="col-letter">K</div>Recipient Name</div>
+            <div class="excel-cell"><div class="col-letter">L</div>Recipient Phone</div>
+            <div class="excel-cell"><div class="col-letter">M</div>Delivery Address</div>
+            <div class="excel-cell"><div class="col-letter">N</div>Delivery City</div>
+            <div class="excel-cell"><div class="col-letter">O</div>Delivery Type</div>
+            <div class="excel-cell"><div class="col-letter">P</div>Package Type</div>
+            <div class="excel-cell"><div class="col-letter">Q</div>Weight</div>
+            <div class="excel-cell"><div class="col-letter">R</div>Package Description</div>
+            <div class="excel-cell"><div class="col-letter">S</div>Declared Value (₦)</div>
+            <div class="excel-cell"><div class="col-letter">T</div>Special Handling</div>
+            <div class="excel-cell"><div class="col-letter">U</div>Amount Paid (₦)</div>
+            <div class="excel-cell"><div class="col-letter">V</div>Payment Method</div>
+            <div class="excel-cell manual"><div class="col-letter">W</div>Status ✍</div>
+            <div class="excel-cell manual"><div class="col-letter">X</div>Tracking Link ✍</div>
+            <div class="excel-cell manual"><div class="col-letter">Y</div>Notes ✍</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div><h2>Status Column Values</h2><p>Use these exact values in column W</p></div>
+        </div>
+        <div class="card-body">
+          <div class="status-track">
+            <div class="status-chip sc-new">New Order</div>
+            <div class="status-chip sc-glovo">Placed on Glovo</div>
+            <div class="status-chip sc-glovo">Rider Assigned</div>
+            <div class="status-chip sc-transit">In Transit</div>
+            <div class="status-chip sc-done">Delivered</div>
+            <div class="status-chip sc-issue">Issue</div>
+          </div>
+          <table style="margin-top:0.75rem">
+            <thead><tr><th>Status</th><th>When to use it</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge badge-new">New Order</span></td><td>Order just came in from JotForm — not yet entered in Glovo</td></tr>
+              <tr><td><span class="badge" style="background:var(--orange-pale);color:var(--orange)">Placed on Glovo</span></td><td>You have entered the order in the Glovo dashboard</td></tr>
+              <tr><td><span class="badge" style="background:var(--orange-pale);color:var(--orange)">Rider Assigned</span></td><td>Glovo has assigned a rider — tracking link is now available</td></tr>
+              <tr><td><span class="badge" style="background:var(--amber-bg);color:var(--amber)">In Transit</span></td><td>Package picked up by rider and en route to recipient</td></tr>
+              <tr><td><span class="badge badge-rec">Delivered</span></td><td>Glovo confirmed delivery — client has received their package</td></tr>
+              <tr><td><span class="badge badge-req">Issue</span></td><td>Any problem — delay, failed delivery, damage, complaint</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== GLOVO ===================== -->
+    <div class="section" id="section-glovo">
+      <div class="alert alert-blue">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p>We use Glovo On-Demand as our delivery infrastructure. You place orders manually on their business dashboard — no API or coding required at this stage.</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-orange"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+          <div><h2>How to Place an Order on Glovo</h2><p>Step-by-step — do this after every confirmed JotForm order</p></div>
+        </div>
+        <div class="card-body">
+          <div class="flow">
+            <div class="flow-step">
+              <div class="flow-num fn-orange">1</div>
+              <div class="flow-body">
+                <h3>Log into Glovo On-Demand dashboard</h3>
+                <p>Go to business.glovoapp.com and log in with your Swift-Fifteen Express business account.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-orange">2</div>
+              <div class="flow-body">
+                <h3>Click "New Delivery"</h3>
+                <p>Select the on-demand courier option (not restaurant/food). This is for package pickup and drop-off.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-orange">3</div>
+              <div class="flow-body">
+                <h3>Enter pickup details</h3>
+                <p>Copy directly from Excel: pickup address, pickup contact name and phone, any special instructions (e.g. "call on arrival").</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-orange">4</div>
+              <div class="flow-body">
+                <h3>Enter delivery details</h3>
+                <p>Copy from Excel: delivery address, recipient name and phone. Add the package description in the notes field (e.g. "2 pairs of shoes in a box — handle with care").</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-navy">5</div>
+              <div class="flow-body">
+                <h3>Confirm and submit the order</h3>
+                <p>Review all details. Confirm. Glovo will assign a nearby rider. Update Excel: status → "Placed on Glovo".</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-navy">6</div>
+              <div class="flow-body">
+                <h3>Copy the tracking link the moment a rider is assigned</h3>
+                <p>Glovo generates a live tracking link once a rider accepts. Copy it immediately. Paste into Excel column X. Update status → "Rider Assigned".</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-green">7</div>
+              <div class="flow-body">
+                <h3>Send tracking link to client on WhatsApp</h3>
+                <p>Message: <em>"Hi [Name]! Your Swift-Fifteen rider is on the way. Track your package live here: [tracking link]. Expected delivery: [time]."</em> Update Excel status → "In Transit".</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num fn-green">8</div>
+              <div class="flow-body">
+                <h3>Confirm delivery and close the order</h3>
+                <p>When Glovo confirms delivery, update Excel status → "Delivered". Send client a WhatsApp confirmation and ask for a Google review 24 hours later.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== STATUS ===================== -->
+    <div class="section" id="section-status">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-green"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+          <div><h2>WhatsApp Message Templates</h2><p>Use these exact scripts for consistency across the team</p></div>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Stage</th><th>Message Template</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>First response</strong></td>
+                <td><em>"Hi [Name]! 👋 Thank you for reaching out to Swift-Fifteen Express. I can see you're interested in our delivery service. To get you started, could you let me know: (1) What are you shipping? (2) Pickup area? (3) Delivery location? We'll have a quote for you in minutes."</em></td>
+              </tr>
+              <tr>
+                <td><strong>Send order form</strong></td>
+                <td><em>"Great! To confirm your order, please fill this quick 2-minute form — payment is collected securely at the end: [JotForm link]. Once done, your pickup will be scheduled and you'll receive a tracking link on WhatsApp."</em></td>
+              </tr>
+              <tr>
+                <td><strong>Rider assigned</strong></td>
+                <td><em>"Hi [Name]! ✅ Your Swift-Fifteen rider is assigned and on the way to pick up your package. Track in real time here: [Glovo link]. We'll update you once it's been picked up."</em></td>
+              </tr>
+              <tr>
+                <td><strong>Delivery confirmed</strong></td>
+                <td><em>"Hi [Name]! 📦 Your package has been delivered successfully to [Recipient Name]. Thank you for choosing Swift-Fifteen Express — Where Speed Meets Safety. We hope to serve you again soon!"</em></td>
+              </tr>
+              <tr>
+                <td><strong>Review request</strong></td>
+                <td><em>"Hi [Name]! We hope your delivery went smoothly. If you're happy with the service, a quick Google review means the world to us and helps other businesses find us: [Google review link]. Thank you! 🙏"</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== TOOLS ===================== -->
+    <div class="section" id="section-tools">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ci-navy"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></div>
+          <div><h2>Tools &amp; Links</h2><p>Everything your team needs bookmarked</p></div>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <a href="https://jotform.com" target="_blank" class="tool-link">
+              <div class="tool-link-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <div><h4>JotForm</h4><p>Order form builder</p></div>
+              <span class="arrow">↗</span>
+            </a>
+            <a href="https://make.com" target="_blank" class="tool-link">
+              <div class="tool-link-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg></div>
+              <div><h4>Make.com</h4><p>Automation platform</p></div>
+              <span class="arrow">↗</span>
+            </a>
+            <a href="https://business.glovoapp.com" target="_blank" class="tool-link">
+              <div class="tool-link-icon"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+              <div><h4>Glovo On-Demand</h4><p>Delivery fulfilment</p></div>
+              <span class="arrow">↗</span>
+            </a>
+            <a href="https://wa.me/2348029234994" target="_blank" class="tool-link">
+              <div class="tool-link-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+              <div><h4>WhatsApp Business</h4><p>08029234994</p></div>
+              <span class="arrow">↗</span>
+            </a>
+            <a href="https://www.instagram.com/swiftfifteenexpress" target="_blank" class="tool-link">
+              <div class="tool-link-icon"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></div>
+              <div><h4>Instagram</h4><p>@swiftfifteenexpress</p></div>
+              <span class="arrow">↗</span>
+            </a>
+            <a href="https://www.facebook.com/share/18onppdL1R/" target="_blank" class="tool-link">
+              <div class="tool-link-icon"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg></div>
+              <div><h4>Facebook</h4><p>Swift-Fifteen Express</p></div>
+              <span class="arrow">↗</span>
+            </a>
+          </div>
+
+          <div style="margin-top:1.5rem">
+            <div class="card-header" style="padding:0 0 0.75rem;border:none">
+              <h2 style="font-size:0.9rem">Key Contacts</h2>
+            </div>
+            <table>
+              <thead><tr><th>Contact</th><th>Detail</th></tr></thead>
+              <tbody>
+                <tr><td>Business Email</td><td>swiftfifteenexpress@gmail.com</td></tr>
+                <tr><td>Business WhatsApp</td><td>08029234994</td></tr>
+                <tr><td>Instagram</td><td>@swiftfifteenexpress</td></tr>
+                <tr><td>Tagline</td><td>"Where Speed Meets Safety"</td></tr>
+                <tr><td>Brand Colours</td><td>Navy #1A3C6E + Orange #E8620A</td></tr>
+                <tr><td>Brand Fonts</td><td>Montserrat Bold (headings) + Open Sans (body)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  btn.classList.add('active');
+  const titles = {
+    overview: 'Dashboard', flow: 'Full Order Flow',
+    jotform: 'JotForm Structure', pricing: 'Pricing',
+    make: 'Make.com Scenarios', excel: 'Excel Order Sheet',
+    glovo: 'Glovo Fulfilment', status: 'Order Statuses & Scripts',
+    tools: 'Tools & Links'
+  };
+  document.getElementById('page-title').textContent = titles[id] || id;
+  closeSidebar();
+  window.scrollTo(0, 0);
+}
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+</script>
+</body>
+</html>
