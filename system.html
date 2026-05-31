@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Swift-Fifteen Express — System Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A3C6E;--navy-dark:#0f2444;--navy-mid:#1e4880;
+  --orange:#E8620A;--orange-light:#f97316;--orange-pale:#fff4ed;
+  --white:#fff;--off:#f8f9fc;
+  --g100:#f1f3f8;--g200:#e2e6ee;--g400:#9ba3b4;--g600:#5a6478;--g800:#1e2533;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Sora',sans-serif;
+}
+
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--navy-dark);color:var(--white);overflow-x:hidden;line-height:1.6}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--navy-dark)}
+::-webkit-scrollbar-thumb{background:var(--orange);border-radius:3px}
+
+/* ── HEADER ── */
+.site-header{
+  background:linear-gradient(135deg,var(--navy-dark) 0%,#112356 50%,var(--navy-dark) 100%);
+  padding:0;border-bottom:1px solid rgba(255,255,255,0.06);
+  position:sticky;top:0;z-index:200;
+}
+.header-inner{
+  max-width:1300px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 2rem;
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-icon{width:34px;height:34px;background:var(--orange);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:20px;height:20px;fill:white}
+.logo-text{font-weight:800;font-size:0.9rem;color:white;letter-spacing:-0.01em}
+.logo-text span{color:var(--orange)}
+.header-badge{
+  background:rgba(232,98,10,0.15);border:1px solid rgba(232,98,10,0.3);
+  color:var(--orange);padding:5px 14px;border-radius:100px;
+  font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  font-family:var(--mono);
+}
+
+/* ── HERO ── */
+.hero{
+  padding:5rem 2rem 4rem;text-align:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(232,98,10,0.12) 0%,transparent 70%);
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.03) 1px,transparent 1px);
+  background-size:32px 32px;pointer-events:none;
+}
+.hero-inner{max-width:900px;margin:0 auto;position:relative}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(232,98,10,0.1);border:1px solid rgba(232,98,10,0.25);
+  color:var(--orange);padding:6px 16px;border-radius:100px;
+  font-family:var(--mono);font-size:0.72rem;font-weight:500;
+  letter-spacing:0.04em;margin-bottom:1.5rem;
+}
+.hero-tag::before{content:'';width:6px;height:6px;background:var(--orange);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.hero h1{
+  font-size:clamp(2rem,5vw,3.2rem);font-weight:800;
+  line-height:1.1;letter-spacing:-0.03em;margin-bottom:1rem;
+}
+.hero h1 em{color:var(--orange);font-style:normal}
+.hero p{font-size:1rem;color:rgba(255,255,255,0.55);font-weight:300;max-width:600px;margin:0 auto 2.5rem}
+
+/* ── PLATFORM COUNT ── */
+.platform-count{
+  display:flex;align-items:center;justify-content:center;
+  gap:2rem;flex-wrap:wrap;margin-bottom:1rem;
+}
+.pc-item{text-align:center}
+.pc-item strong{display:block;font-size:1.8rem;font-weight:800;color:var(--orange);font-family:var(--mono)}
+.pc-item span{font-size:0.75rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.06em}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1300px;margin:0 auto;padding:0 2rem 6rem}
+
+/* ── SECTION ── */
+.section{margin-bottom:5rem}
+.section-header{
+  display:flex;align-items:flex-start;gap:1.25rem;
+  margin-bottom:2rem;padding-bottom:1.25rem;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.section-num{
+  font-family:var(--mono);font-size:0.72rem;font-weight:700;
+  color:var(--orange);letter-spacing:0.1em;
+  background:rgba(232,98,10,0.1);border:1px solid rgba(232,98,10,0.25);
+  padding:4px 10px;border-radius:4px;flex-shrink:0;margin-top:6px;
+}
+.section-header h2{font-size:clamp(1.4rem,3vw,1.9rem);font-weight:800;letter-spacing:-0.02em;line-height:1.2}
+.section-header p{font-size:0.88rem;color:rgba(255,255,255,0.5);margin-top:4px;font-weight:300}
+
+/* ── CARDS ── */
+.card{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+  border-radius:16px;overflow:hidden;
+}
+.card-header{
+  padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,0.02);
+}
+.card-header h3{font-weight:700;font-size:0.95rem;color:white}
+.card-header p{font-size:0.78rem;color:rgba(255,255,255,0.4);margin-top:1px}
+.ch-icon{
+  width:34px;height:34px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.chi-o{background:rgba(232,98,10,0.15)} .chi-o svg{stroke:var(--orange)}
+.chi-n{background:rgba(26,60,110,0.5)} .chi-n svg{stroke:#60a5fa}
+.chi-g{background:rgba(22,163,74,0.15)} .chi-g svg{stroke:#4ade80}
+.chi-p{background:rgba(168,85,247,0.15)} .chi-p svg{stroke:#c084fc}
+.card-icon svg{width:18px;height:18px;fill:none;stroke-width:2}
+.card-body{padding:1.5rem}
+
+/* ── FLOW DIAGRAM ── */
+.flow-container{
+  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);
+  border-radius:20px;padding:2rem;overflow-x:auto;
+}
+.flow-row{
+  display:flex;align-items:center;gap:0;
+  min-width:max-content;
+}
+.flow-node{
+  display:flex;flex-direction:column;align-items:center;
+  width:130px;flex-shrink:0;
+}
+.fn-circle{
+  width:56px;height:56px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;margin-bottom:0.75rem;
+  position:relative;z-index:2;border:2px solid;
+  transition:transform 0.2s;cursor:default;
+}
+.fn-circle:hover{transform:scale(1.1)}
+.fn-num{
+  position:absolute;top:-4px;right:-4px;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--orange);color:white;
+  font-family:var(--mono);font-size:0.6rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+.fn-navy{background:rgba(26,60,110,0.6);border-color:rgba(96,165,250,0.4)}
+.fn-orange{background:rgba(232,98,10,0.2);border-color:rgba(232,98,10,0.5)}
+.fn-green{background:rgba(22,163,74,0.2);border-color:rgba(74,222,128,0.4)}
+.fn-purple{background:rgba(168,85,247,0.2);border-color:rgba(192,132,252,0.4)}
+.fn-label{font-size:0.72rem;font-weight:600;text-align:center;color:rgba(255,255,255,0.8);line-height:1.3}
+.fn-sub{font-size:0.62rem;color:rgba(255,255,255,0.35);text-align:center;margin-top:2px;font-family:var(--mono)}
+
+.flow-arrow{
+  display:flex;align-items:center;flex-shrink:0;
+  padding:0 4px;margin-bottom:30px;
+}
+.flow-arrow svg{width:24px;height:24px;stroke:var(--orange);fill:none;stroke-width:2;opacity:0.6}
+
+/* ── VERTICAL FLOW ── */
+.vflow{display:flex;flex-direction:column;gap:0}
+.vf-step{display:flex;gap:1.25rem;position:relative}
+.vf-step:not(:last-child)::before{
+  content:'';position:absolute;
+  left:19px;top:42px;bottom:-16px;
+  width:2px;
+  background:linear-gradient(to bottom,var(--orange),rgba(232,98,10,0.1));
+}
+.vf-num{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:700;font-size:0.82rem;
+  position:relative;z-index:1;margin-top:4px;
+}
+.vfn-o{background:var(--orange);color:white}
+.vfn-n{background:var(--navy-mid);color:#60a5fa;border:1px solid rgba(96,165,250,0.3)}
+.vfn-g{background:rgba(22,163,74,0.3);color:#4ade80;border:1px solid rgba(74,222,128,0.3)}
+.vfn-p{background:rgba(168,85,247,0.2);color:#c084fc;border:1px solid rgba(192,132,252,0.3)}
+.vf-body{padding-bottom:2rem;flex:1}
+.vf-body h3{font-weight:700;font-size:1rem;color:white;margin-bottom:0.4rem}
+.vf-body p{font-size:0.85rem;color:rgba(255,255,255,0.55);line-height:1.65;font-weight:300}
+.vf-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:0.75rem}
+.vf-tag{
+  font-family:var(--mono);font-size:0.65rem;font-weight:500;
+  padding:3px 10px;border-radius:4px;
+}
+.vft-o{background:rgba(232,98,10,0.15);color:var(--orange);border:1px solid rgba(232,98,10,0.25)}
+.vft-b{background:rgba(96,165,250,0.1);color:#60a5fa;border:1px solid rgba(96,165,250,0.2)}
+.vft-g{background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2)}
+.vft-p{background:rgba(192,132,252,0.1);color:#c084fc;border:1px solid rgba(192,132,252,0.2)}
+
+/* ── CODE BLOCK ── */
+.code-block{
+  background:#0a1628;border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px;overflow:hidden;margin:1rem 0;
+}
+.code-block-header{
+  padding:8px 16px;background:rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  font-family:var(--mono);font-size:0.7rem;color:rgba(255,255,255,0.4);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.code-lang{color:var(--orange)}
+.code-block pre{
+  padding:1.25rem 1.5rem;
+  font-family:var(--mono);font-size:0.78rem;
+  color:rgba(255,255,255,0.8);line-height:1.7;
+  overflow-x:auto;white-space:pre;
+}
+.code-key{color:#60a5fa}
+.code-val{color:#4ade80}
+.code-str{color:#f59e0b}
+.code-comment{color:rgba(255,255,255,0.3)}
+
+/* ── PLATFORM PILLS ── */
+.platform-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
+.platform-card{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+  border-radius:12px;padding:1.1rem 1.25rem;
+  display:flex;align-items:flex-start;gap:12px;
+  transition:border-color 0.2s,background 0.2s;
+}
+.platform-card:hover{border-color:rgba(232,98,10,0.3);background:rgba(232,98,10,0.03)}
+.pl-icon{font-size:1.4rem;flex-shrink:0;margin-top:2px}
+.pl-name{font-weight:700;font-size:0.88rem;color:white;margin-bottom:2px}
+.pl-role{font-size:0.75rem;color:rgba(255,255,255,0.4);line-height:1.4;font-weight:300}
+.pl-status{
+  margin-top:6px;display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:0.62rem;
+}
+.pl-status::before{content:'';width:5px;height:5px;border-radius:50%}
+.pls-live::before{background:#4ade80} .pls-live{color:#4ade80}
+.pls-ext::before{background:#60a5fa} .pls-ext{color:#60a5fa}
+
+/* ── DATA TABLE ── */
+.data-table{width:100%;border-collapse:collapse;font-size:0.82rem}
+.data-table th{
+  background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);
+  padding:0.65rem 1rem;text-align:left;
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.06em;text-transform:uppercase;
+  border-bottom:1px solid rgba(255,255,255,0.07);font-weight:500;
+}
+.data-table td{
+  padding:0.75rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);
+  color:rgba(255,255,255,0.75);vertical-align:top;
+}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,0.02)}
+.data-table td:first-child{font-family:var(--mono);font-size:0.75rem;color:var(--orange);font-weight:500}
+
+/* ── CALLOUT ── */
+.callout{
+  display:flex;gap:12px;padding:1rem 1.25rem;
+  border-radius:10px;margin:1rem 0;font-size:0.85rem;
+}
+.c-blue{background:rgba(96,165,250,0.08);border-left:3px solid #60a5fa}
+.c-orange{background:rgba(232,98,10,0.08);border-left:3px solid var(--orange)}
+.c-green{background:rgba(74,222,128,0.08);border-left:3px solid #4ade80}
+.callout svg{width:18px;height:18px;flex-shrink:0;fill:none;stroke-width:2;margin-top:1px}
+.c-blue svg{stroke:#60a5fa} .c-orange svg{stroke:var(--orange)} .c-green svg{stroke:#4ade80}
+.callout p{color:rgba(255,255,255,0.75);line-height:1.6;font-weight:300}
+.callout strong{color:white;font-weight:600}
+
+/* ── MINI ARCH DIAGRAM ── */
+.arch-diagram{
+  background:#080f1e;border:1px solid rgba(255,255,255,0.07);
+  border-radius:16px;padding:2rem;
+  display:grid;grid-template-columns:1fr auto 1fr auto 1fr;
+  gap:1rem;align-items:center;
+}
+.arch-box{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;padding:1.25rem 1rem;text-align:center;
+}
+.arch-box.highlight{border-color:rgba(232,98,10,0.4);background:rgba(232,98,10,0.06)}
+.arch-box .ab-icon{font-size:1.6rem;margin-bottom:0.5rem}
+.arch-box .ab-name{font-weight:700;font-size:0.88rem;color:white}
+.arch-box .ab-desc{font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:3px;font-family:var(--mono)}
+.arch-arrow{text-align:center;color:rgba(255,255,255,0.2);font-size:1.2rem}
+.arch-arrow svg{width:28px;height:28px;stroke:var(--orange);fill:none;stroke-width:1.5;opacity:0.5}
+
+/* ── GRID ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem}
+
+/* ── BADGE ── */
+.badge{display:inline-block;font-family:var(--mono);font-size:0.65rem;font-weight:600;padding:2px 8px;border-radius:4px}
+.badge-o{background:rgba(232,98,10,0.2);color:var(--orange)}
+.badge-b{background:rgba(96,165,250,0.15);color:#60a5fa}
+.badge-g{background:rgba(74,222,128,0.15);color:#4ade80}
+
+/* ── SIDEBAR NAV ── */
+.page-layout{display:flex;gap:3rem;align-items:flex-start;margin-top:3rem}
+.sidebar-nav{
+  width:220px;flex-shrink:0;position:sticky;top:80px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.sn-section{
+  font-family:var(--mono);font-size:0.62rem;color:rgba(255,255,255,0.25);
+  letter-spacing:0.1em;text-transform:uppercase;
+  padding:0.5rem 0.75rem 0.25rem;margin-top:0.75rem;
+}
+.sn-item{
+  display:flex;align-items:center;gap:8px;
+  padding:0.5rem 0.75rem;border-radius:6px;
+  color:rgba(255,255,255,0.45);font-size:0.8rem;
+  text-decoration:none;transition:all 0.15s;cursor:pointer;
+  border:1px solid transparent;
+}
+.sn-item:hover,.sn-item.active{
+  color:white;background:rgba(232,98,10,0.1);
+  border-color:rgba(232,98,10,0.2);
+}
+.sn-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;opacity:0.6}
+.main-content{flex:1;min-width:0}
+
+/* ── HIGHLIGHT BOX ── */
+.highlight-box{
+  background:linear-gradient(135deg,rgba(232,98,10,0.1),rgba(232,98,10,0.03));
+  border:1px solid rgba(232,98,10,0.25);border-radius:12px;
+  padding:1.25rem 1.5rem;margin:1rem 0;
+}
+.highlight-box h4{font-weight:700;font-size:0.9rem;color:var(--orange);margin-bottom:0.5rem}
+.highlight-box p{font-size:0.84rem;color:rgba(255,255,255,0.65);line-height:1.65;font-weight:300}
+
+/* ── FOOTER ── */
+footer{
+  background:rgba(0,0,0,0.3);border-top:1px solid rgba(255,255,255,0.05);
+  text-align:center;padding:2rem;
+  font-size:0.78rem;color:rgba(255,255,255,0.25);
+  font-family:var(--mono);
+}
+
+@media(max-width:900px){
+  .page-layout{flex-direction:column}
+  .sidebar-nav{display:none}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .arch-diagram{grid-template-columns:1fr;text-align:center}
+  .arch-arrow{transform:rotate(90deg)}
+  .flow-container{padding:1rem}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="https://swiftfifteenexpress.com" class="logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+      <div class="logo-text">SWIFT-FIFTEEN <span>EXPRESS</span></div>
+    </a>
+    <div class="header-badge">System Architecture v1.0</div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Internal Documentation — Team Use Only</div>
+    <h1>How Our System <em>Actually Works</em></h1>
+    <p>A complete technical breakdown of every platform, integration, automation and data flow that powers Swift-Fifteen Express — from first website visit to rider dispatch.</p>
+    <div class="platform-count">
+      <div class="pc-item"><strong>9</strong><span>Platforms</span></div>
+      <div class="pc-item"><strong>4</strong><span>API Integrations</span></div>
+      <div class="pc-item"><strong>11</strong><span>Automated steps</span></div>
+      <div class="pc-item"><strong>0</strong><span>Manual entries</span></div>
+      <div class="pc-item"><strong>₦0</strong><span>Monthly server cost</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="page-layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar-nav">
+      <div class="sn-section">Overview</div>
+      <a class="sn-item active" href="#platforms">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg>All Platforms
+      </a>
+      <a class="sn-item" href="#full-flow">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Full Flow Diagram
+      </a>
+      <div class="sn-section">Stage by Stage</div>
+      <a class="sn-item" href="#stage1">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20"/></svg>Stage 1 — Landing
+      </a>
+      <a class="sn-item" href="#stage2">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Stage 2 — Lead
+      </a>
+      <a class="sn-item" href="#stage3">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Stage 3 — SMS & Email
+      </a>
+      <a class="sn-item" href="#stage4">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>Stage 4 — Order Form
+      </a>
+      <a class="sn-item" href="#stage5">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/></svg>Stage 5 — Geocoding
+      </a>
+      <a class="sn-item" href="#stage6">
+        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Stage 6 — Payment
+      </a>
+      <a class="sn-item" href="#stage7">
+        <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>Stage 7 — Dispatch
+      </a>
+      <a class="sn-item" href="#data">
+        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Data Reference
+      </a>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+      <!-- ═══ ALL PLATFORMS ═══ -->
+      <div class="section" id="platforms">
+        <div class="section-header">
+          <div class="section-num">00</div>
+          <div>
+            <h2>Every Platform in Our Stack</h2>
+            <p>Nine external services work together to power Swift-Fifteen Express end to end</p>
+          </div>
+        </div>
+
+        <div class="platform-grid">
+          <div class="platform-card">
+            <div class="pl-icon">🌐</div>
+            <div>
+              <div class="pl-name">GitHub Pages</div>
+              <div class="pl-role">Hosts our website for free. swiftfifteenexpress.com is a static HTML file served directly from our GitHub repository.</div>
+              <div class="pl-status pls-live">LIVE</div>
+            </div>
+          </div>
+          <div class="platform-card">
+            <div class="pl-icon">🏷️</div>
+            <div>
+              <div class="pl-name">Whogohost</div>
+              <div class="pl-role">Nigerian domain registrar. Owns the swiftfifteenexpress.com domain. DNS A records point to GitHub Pages IP addresses.</div>
+              <div class="pl-status pls-live">LIVE</div>
+            </div>
+          </div>
+          <div class="platform-card">
+            <div class="pl-icon">⚡</div>
+            <div>
+              <div class="pl-name">Vercel</div>
+              <div class="pl-role">Hosts our serverless API functions. Three functions: estimate.js, dispatch.js (legacy), verify-payment.js. Free tier. Auto-deploys from GitHub.</div>
+              <div class="pl-status pls-live">LIVE</div>
+            </div>
+          </div>
+          <div class="platform-card">
+            <div class="pl-icon">🔁</div>
+            <div>
+              <div class="pl-name">Make.com</div>
+              <div class="pl-role">Automation platform. Receives webhook data after every lead form and order, logs to Google Sheets, sends SMS and email confirmations.</div>
+              <div class="pl-status pls-live">LIVE</div>
+            </div>
+          </div>
+          <div class="platform-card">
+            <div class="pl-icon">📊</div>
+            <div>
+              <div class="pl-name">Google Sheets</div>
+              <div class="pl-role">Live order log. Every lead and order is added as a new row automatically by Make.com. 25+ columns of data per order.</div>
+              <div class="pl-status pls-live">LIVE</div>
+            </div>
+          </div>
+          <div class="platform-card">
+            <div class="pl-icon">🗺️</div>
+            <div>
+              <div class="pl-name">Google Maps API</div>
+              <div class="pl-role">Geocoding. Converts plain text addresses typed by customers into precise latitude and longitude coordinates for Kwikpik.</div>
+              <div class="pl-status pls-live">LIVE</div>
+            </div>
+          </div>
+          <div class="platform-card">
+            <div class="pl-icon">💳</div>
+            <div>
+              <div class="pl-name">Paystack</div>
+              <div class="pl-role">Payment processing. Popup collects card, bank transfer or USSD. Our Vercel function verifies every payment before dispatch.</div>
+              <div class="pl-status pls-live">LIVE</div>
+            </div>
+          </div>
+          <div class="platform-card">
+            <div class="pl-icon">🏍️</div>
+            <div>
+              <div class="pl-name">Kwikpik</div>
+              <div class="pl-role">Delivery infrastructure. We use their API to get live delivery prices and dispatch motorcycle riders. We never own a bike.</div>
+              <div class="pl-status pls-live">LIVE</div>
+            </div>
+          </div>
+          <div class="platform-card">
+            <div class="pl-icon">📈</div>
+            <div>
+              <div class="pl-name">Meta Pixel + GA4</div>
+              <div class="pl-role">Analytics and ad tracking. Tracks every page view, lead form submission, checkout start, and completed purchase for ad optimisation.</div>
+              <div class="pl-status pls-live">LIVE</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ FULL FLOW DIAGRAM ═══ -->
+      <div class="section" id="full-flow">
+        <div class="section-header">
+          <div class="section-num">01</div>
+          <div>
+            <h2>Complete System Flow</h2>
+            <p>Every step from first visit to delivered package</p>
+          </div>
+        </div>
+
+        <div class="flow-container">
+          <div class="flow-row">
+            <div class="flow-node">
+              <div class="fn-circle fn-navy"><div class="fn-num">1</div>🌐</div>
+              <div class="fn-label">Visitor lands</div>
+              <div class="fn-sub">GitHub Pages</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-orange"><div class="fn-num">2</div>📝</div>
+              <div class="fn-label">Fills lead form</div>
+              <div class="fn-sub">Landing Page</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-green"><div class="fn-num">3</div>⚡</div>
+              <div class="fn-label">Webhook fires</div>
+              <div class="fn-sub">Make.com</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-navy"><div class="fn-num">4</div>📊</div>
+              <div class="fn-label">Lead logged</div>
+              <div class="fn-sub">Google Sheets</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-orange"><div class="fn-num">5</div>💬</div>
+              <div class="fn-label">SMS + Email</div>
+              <div class="fn-sub">Auto-sent</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-purple"><div class="fn-num">6</div>📋</div>
+              <div class="fn-label">Order form</div>
+              <div class="fn-sub">/order page</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-navy"><div class="fn-num">7</div>🗺️</div>
+              <div class="fn-label">Geocoding</div>
+              <div class="fn-sub">Google Maps</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-orange"><div class="fn-num">8</div>🏍️</div>
+              <div class="fn-label">Live price</div>
+              <div class="fn-sub">Kwikpik API</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-green"><div class="fn-num">9</div>💳</div>
+              <div class="fn-label">Payment</div>
+              <div class="fn-sub">Paystack</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-navy"><div class="fn-num">10</div>✅</div>
+              <div class="fn-label">Verified</div>
+              <div class="fn-sub">Vercel API</div>
+            </div>
+            <div class="flow-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+            <div class="flow-node">
+              <div class="fn-circle fn-orange"><div class="fn-num">11</div>📍</div>
+              <div class="fn-label">Rider dispatched</div>
+              <div class="fn-sub">Kwikpik</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout c-orange" style="margin-top:1.5rem">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p><strong>Key principle:</strong> No human intervention is required between Step 9 (payment) and Step 11 (rider dispatched). The entire flow from payment confirmation to rider assignment is fully automated. Our team only gets involved if the auto-dispatch fails, which triggers a fallback WhatsApp alert.</p>
+        </div>
+      </div>
+
+      <!-- ═══ STAGE 1 ═══ -->
+      <div class="section" id="stage1">
+        <div class="section-header">
+          <div class="section-num">02</div>
+          <div>
+            <h2>Stage 1 — The Landing Page</h2>
+            <p>How a visitor arrives and what the page does technically</p>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-bottom:1.25rem">
+          <div class="card">
+            <div class="card-header">
+              <div class="ch-icon chi-n"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20"/></svg></div>
+              <div><h3>Hosting Architecture</h3><p>How the page is served</p></div>
+            </div>
+            <div class="card-body">
+              <div class="vflow">
+                <div class="vf-step">
+                  <div class="vf-num vfn-o">1</div>
+                  <div class="vf-body">
+                    <h3>Customer types swiftfifteenexpress.com</h3>
+                    <p>Their browser sends a DNS lookup to find the IP address for our domain.</p>
+                    <div class="vf-tags"><span class="vf-tag vft-b">DNS Query</span></div>
+                  </div>
+                </div>
+                <div class="vf-step">
+                  <div class="vf-num vfn-n">2</div>
+                  <div class="vf-body">
+                    <h3>Whogohost DNS resolves to GitHub</h3>
+                    <p>Our 4 A records on Whogohost point to GitHub Pages IPs: 185.199.108-111.153. The browser now knows where to go.</p>
+                    <div class="vf-tags"><span class="vf-tag vft-b">Whogohost</span><span class="vf-tag vft-b">DNS A Records</span></div>
+                  </div>
+                </div>
+                <div class="vf-step">
+                  <div class="vf-num vfn-g">3</div>
+                  <div class="vf-body">
+                    <h3>GitHub Pages serves index.html</h3>
+                    <p>GitHub reads our repository and delivers the single index.html file to the customer's browser. The entire website is one file. Free, instant, global CDN.</p>
+                    <div class="vf-tags"><span class="vf-tag vft-g">GitHub Pages</span><span class="vf-tag vft-b">HTTPS/SSL</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="ch-icon chi-o"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+              <div><h3>What Loads on the Page</h3><p>Every script and service that activates</p></div>
+            </div>
+            <div class="card-body">
+              <table class="data-table">
+                <thead><tr><th>Service</th><th>What it does on load</th></tr></thead>
+                <tbody>
+                  <tr><td>Google Fonts</td><td>Loads Montserrat + Open Sans typography</td></tr>
+                  <tr><td>Meta Pixel</td><td>Fires PageView event — tells Facebook someone visited</td></tr>
+                  <tr><td>Google Analytics 4</td><td>Fires page_view — records the session in GA4</td></tr>
+                  <tr><td>Our HTML/CSS/JS</td><td>Renders the hero, lead form, and all page sections</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STAGE 2 ═══ -->
+      <div class="section" id="stage2">
+        <div class="section-header">
+          <div class="section-num">03</div>
+          <div>
+            <h2>Stage 2 — Lead Capture & Data Collection</h2>
+            <p>What happens the moment someone fills and submits the registration form</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.25rem">
+          <div class="card-header">
+            <div class="ch-icon chi-o"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div><h3>Lead Form Fields Collected</h3><p>Everything captured in the landing page registration form</p></div>
+          </div>
+          <div class="card-body">
+            <table class="data-table">
+              <thead><tr><th>Field</th><th>What we collect</th><th>Why we collect it</th></tr></thead>
+              <tbody>
+                <tr><td>First_Name</td><td>Customer's first name</td><td>Personalise SMS, email and WhatsApp messages</td></tr>
+                <tr><td>Last_Name</td><td>Customer's last name</td><td>Full identification in our records</td></tr>
+                <tr><td>Business_Name</td><td>Their company name (optional)</td><td>Segment B2B vs individual leads in Google Sheets</td></tr>
+                <tr><td>Phone_Number</td><td>WhatsApp number</td><td>Send automated SMS and for our team to follow up</td></tr>
+                <tr><td>Email_Address</td><td>Email address</td><td>Send automated confirmation email via Make.com</td></tr>
+                <tr><td>Monthly_Shipments</td><td>1–10 / 11–50 / 51–200 / 200+</td><td>Qualify lead volume — high-volume leads get priority follow-up</td></tr>
+                <tr><td>Business_Type</td><td>E-commerce / SME / Manufacturer / Individual</td><td>Segment into correct Google Sheets tab and email sequence</td></tr>
+                <tr><td>Source</td><td>"Landing Page Registration" (auto)</td><td>Track which page generated the lead</td></tr>
+                <tr><td>Submitted_At</td><td>ISO timestamp (auto)</td><td>Record exact time of lead for follow-up SLA tracking</td></tr>
+                <tr><td>Offer</td><td>"50% off first 3 shipments" (auto)</td><td>Know which promotion drove the lead</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="ch-icon chi-g"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg></div>
+            <div><h3>What Happens After Submit — Technical Flow</h3><p>The automated chain that fires in milliseconds</p></div>
+          </div>
+          <div class="card-body">
+            <div class="vflow">
+              <div class="vf-step">
+                <div class="vf-num vfn-o">1</div>
+                <div class="vf-body">
+                  <h3>Form data is encoded and sent to Make.com</h3>
+                  <p>Our JavaScript collects all 10 fields and sends them to the Make.com webhook URL as <code style="font-family:var(--mono);font-size:0.82rem;color:var(--orange)">application/x-www-form-urlencoded</code> — this format sends each field as a separate key-value pair so Make.com can read and map every individual field without any parsing.</p>
+                  <div class="vf-tags"><span class="vf-tag vft-o">POST Request</span><span class="vf-tag vft-b">Make.com Webhook</span></div>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-n">2</div>
+                <div class="vf-body">
+                  <h3>Meta Pixel fires Lead event</h3>
+                  <p>Simultaneously, a <code style="font-family:var(--mono);color:var(--orange);font-size:0.82rem">fbq('track', 'Lead')</code> call fires. Facebook records this person as a verified lead. This trains the ad algorithm to find more people like them and is used to optimise our Lead Generation campaigns.</p>
+                  <div class="vf-tags"><span class="vf-tag vft-p">Meta Pixel</span><span class="vf-tag vft-p">Lead Event</span></div>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-g">3</div>
+                <div class="vf-body">
+                  <h3>Make.com receives the data and routes it</h3>
+                  <p>Make.com's webhook trigger activates 3 parallel scenarios: (1) Add a new row to the Leads tab in Google Sheets with all 10 fields mapped to the correct columns. (2) Send an alert email to swiftfifteenexpress@gmail.com. (3) Send an automated SMS and email to the lead.</p>
+                  <div class="vf-tags"><span class="vf-tag vft-g">Make.com</span><span class="vf-tag vft-g">Google Sheets</span><span class="vf-tag vft-g">Email</span><span class="vf-tag vft-g">SMS</span></div>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-p">4</div>
+                <div class="vf-body">
+                  <h3>Success screen shows order form button</h3>
+                  <p>The lead form hides and a success message appears with a direct link to swiftfifteenexpress.com/order. The WhatsApp button is a secondary option for leads who have questions before ordering. The primary path pushes them straight to place an order.</p>
+                  <div class="vf-tags"><span class="vf-tag vft-b">UX Flow</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STAGE 3 ═══ -->
+      <div class="section" id="stage3">
+        <div class="section-header">
+          <div class="section-num">04</div>
+          <div>
+            <h2>Stage 3 — Automated SMS & Email</h2>
+            <p>The instant messages that fire to every new lead</p>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-header">
+              <div class="ch-icon chi-o"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+              <div><h3>SMS Message</h3><p>Sent to Phone_Number via Termii/Twilio</p></div>
+            </div>
+            <div class="card-body">
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-lang">SMS — 158 characters</span></div>
+                <pre>Hi [First_Name]! 🎉 Your Swift-Fifteen 
+Express spot is confirmed. Get your 3 
+FREE deliveries now 👉 
+swiftfifteenexpress.com/order 
+— Offer ends soon!</pre>
+              </div>
+              <div class="callout c-blue" style="margin-top:0.75rem">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <p>Make.com pulls the <strong>First_Name</strong> and <strong>Phone_Number</strong> fields directly from the webhook data and injects them into the message template before sending.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="ch-icon chi-n"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+              <div><h3>Email Subject Lines</h3><p>A/B tested — Make.com rotates between both</p></div>
+            </div>
+            <div class="card-body">
+              <div class="highlight-box" style="margin-bottom:0.75rem">
+                <h4>Version A — Lead generation focus</h4>
+                <p style="font-family:var(--mono);font-size:0.85rem;color:rgba(255,255,255,0.8)">🎁 Your 3 free deliveries are waiting, [First_Name]</p>
+              </div>
+              <div class="highlight-box">
+                <h4>Version B — Confirmation focus</h4>
+                <p style="font-family:var(--mono);font-size:0.85rem;color:rgba(255,255,255,0.8)">You're in! Here's your Swift-Fifteen Express launch offer</p>
+              </div>
+              <div class="callout c-orange" style="margin-top:0.75rem">
+                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <p>Email contains: welcome message, list of benefits, a direct button linking to the order page, and our WhatsApp number. Sent from <strong>swiftfifteenexpress@gmail.com</strong> via Gmail module in Make.com.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STAGE 4 ═══ -->
+      <div class="section" id="stage4">
+        <div class="section-header">
+          <div class="section-num">05</div>
+          <div>
+            <h2>Stage 4 — The Order Form</h2>
+            <p>How the 5-page order form collects and structures delivery data</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.25rem">
+          <div class="card-header">
+            <div class="ch-icon chi-p"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg></div>
+            <div><h3>5-Page Form Structure</h3><p>Hosted at swiftfifteenexpress.com/order</p></div>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem">
+              <div style="background:rgba(232,98,10,0.1);border:1px solid rgba(232,98,10,0.25);border-radius:10px;padding:1rem;text-align:center">
+                <div style="font-family:var(--mono);font-weight:700;font-size:1.2rem;color:var(--orange)">1</div>
+                <div style="font-weight:700;font-size:0.82rem;color:white;margin:6px 0">Sender</div>
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.4)">Name, phone, email, business</div>
+              </div>
+              <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:1rem;text-align:center">
+                <div style="font-family:var(--mono);font-weight:700;font-size:1.2rem;color:#60a5fa">2</div>
+                <div style="font-weight:700;font-size:0.82rem;color:white;margin:6px 0">Pickup</div>
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.4)">Address, city, date, time window</div>
+              </div>
+              <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:1rem;text-align:center">
+                <div style="font-family:var(--mono);font-weight:700;font-size:1.2rem;color:#60a5fa">3</div>
+                <div style="font-weight:700;font-size:0.82rem;color:white;margin:6px 0">Delivery</div>
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.4)">Recipient, address, state, type + LIVE PRICE</div>
+              </div>
+              <div style="background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:10px;padding:1rem;text-align:center">
+                <div style="font-family:var(--mono);font-weight:700;font-size:1.2rem;color:#c084fc">4</div>
+                <div style="font-weight:700;font-size:0.82rem;color:white;margin:6px 0">Package</div>
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.4)">Type, weight, description, value, handling</div>
+              </div>
+              <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:1rem;text-align:center">
+                <div style="font-family:var(--mono);font-weight:700;font-size:1.2rem;color:#4ade80">5</div>
+                <div style="font-weight:700;font-size:0.82rem;color:white;margin:6px 0">Pay</div>
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.4)">Summary + Paystack popup</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STAGE 5 — GEOCODING ═══ -->
+      <div class="section" id="stage5">
+        <div class="section-header">
+          <div class="section-num">06</div>
+          <div>
+            <h2>Stage 5 — Address to Coordinates (Geocoding)</h2>
+            <p>Why we need to convert addresses and exactly how it works</p>
+          </div>
+        </div>
+
+        <div class="callout c-orange" style="margin-bottom:1.25rem">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <p><strong>Why geocoding is necessary:</strong> The Kwikpik API does not accept plain text addresses like "12 Allen Avenue, Ikeja". It requires precise GPS coordinates — latitude and longitude numbers. We use Google Maps to translate what the customer types into coordinates Kwikpik can understand.</p>
+        </div>
+
+        <div class="arch-diagram" style="margin-bottom:1.25rem">
+          <div class="arch-box">
+            <div class="ab-icon">📝</div>
+            <div class="ab-name">Customer types</div>
+            <div class="ab-desc">"12 Allen Avenue,<br/>Ikeja, Lagos"</div>
+          </div>
+          <div class="arch-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="arch-box highlight">
+            <div class="ab-icon">🗺️</div>
+            <div class="ab-name">Google Maps API</div>
+            <div class="ab-desc">Geocoding endpoint<br/>(Vercel function)</div>
+          </div>
+          <div class="arch-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+          <div class="arch-box">
+            <div class="ab-icon">📍</div>
+            <div class="ab-name">Coordinates returned</div>
+            <div class="ab-desc">lat: 6.5974061<br/>lng: 3.3548596</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="ch-icon chi-g"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+            <div><h3>Geocoding Step by Step</h3><p>What our Vercel estimate.js function does when addresses are entered</p></div>
+          </div>
+          <div class="card-body">
+            <div class="vflow">
+              <div class="vf-step">
+                <div class="vf-num vfn-o">1</div>
+                <div class="vf-body">
+                  <h3>Customer finishes typing delivery address and clicks away</h3>
+                  <p>The <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">onblur</code> event on the delivery address field triggers the <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">fetchEstimate()</code> function automatically. No button press needed.</p>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-n">2</div>
+                <div class="vf-body">
+                  <h3>Browser sends both addresses to our Vercel function</h3>
+                  <p>A POST request goes to <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">https://swiftfifteen-api.vercel.app/api/estimate</code> with the pickup and delivery address text. The browser never contacts Google Maps or Kwikpik directly — everything goes through our Vercel function which keeps API keys hidden.</p>
+                  <div class="vf-tags"><span class="vf-tag vft-b">Vercel Function</span><span class="vf-tag vft-b">API Key Protected</span></div>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-g">3</div>
+                <div class="vf-body">
+                  <h3>Vercel calls Google Maps Geocoding API for both addresses simultaneously</h3>
+                  <p>Two parallel calls go to <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">maps.googleapis.com/maps/api/geocode/json</code> with the Nigeria country filter applied. Google returns precise latitude and longitude for each address. Example result for "12 Allen Avenue, Ikeja":</p>
+                  <div class="code-block">
+                    <div class="code-block-header"><span class="code-lang">JSON — Google Maps Response</span></div>
+                    <pre>{
+  <span class="code-key">"status"</span>: <span class="code-str">"OK"</span>,
+  <span class="code-key">"results"</span>: [{
+    <span class="code-key">"geometry"</span>: {
+      <span class="code-key">"location"</span>: {
+        <span class="code-key">"lat"</span>: <span class="code-val">6.5974061</span>,
+        <span class="code-key">"lng"</span>: <span class="code-val">3.3548596</span>
+      }
+    }
+  }]
+}</pre>
+                  </div>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-p">4</div>
+                <div class="vf-body">
+                  <h3>Coordinates are sent to Kwikpik for price calculation</h3>
+                  <p>Vercel now builds the Kwikpik payload with the correct nested structure the API requires and sends it to <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">api.kwikpik.io/partners/requests/estimate</code></p>
+                  <div class="code-block">
+                    <div class="code-block-header"><span class="code-lang">JSON — Sent to Kwikpik</span></div>
+                    <pre>{
+  <span class="code-key">"vehicleType"</span>: <span class="code-str">"motorcycle"</span>,
+  <span class="code-key">"insured"</span>: <span class="code-val">false</span>,
+  <span class="code-key">"pickupLocation"</span>: {
+    <span class="code-key">"latitude"</span>:  <span class="code-val">6.5974061</span>,
+    <span class="code-key">"longitude"</span>: <span class="code-val">3.3548596</span>,
+    <span class="code-key">"address"</span>:   <span class="code-str">"12 Allen Avenue, Ikeja, Lagos"</span>
+  },
+  <span class="code-key">"deliveryLocation"</span>: {
+    <span class="code-key">"latitude"</span>:  <span class="code-val">6.448041</span>,
+    <span class="code-key">"longitude"</span>: <span class="code-val">3.480237</span>,
+    <span class="code-key">"address"</span>:   <span class="code-str">"10 Admiralty Way, Lekki Phase 1"</span>
+  }
+}</pre>
+                  </div>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-o">5</div>
+                <div class="vf-body">
+                  <h3>Kwikpik returns raw delivery cost</h3>
+                  <p>Kwikpik calculates the real distance cost based on their rider network and traffic data. Our function applies <strong>25% margin</strong> on top of whatever Kwikpik charges. If launch offer is active (June 1–3), an additional 20% discount is applied. The final customer price is sent back to the browser.</p>
+                  <div class="code-block">
+                    <div class="code-block-header"><span class="code-lang">JSON — Our response to the browser</span></div>
+                    <pre>{
+  <span class="code-key">"success"</span>:       <span class="code-val">true</span>,
+  <span class="code-key">"kwikpik_price"</span>: <span class="code-val">13975</span>,   <span class="code-comment">// what we pay Kwikpik</span>
+  <span class="code-key">"your_price"</span>:    <span class="code-val">17500</span>,   <span class="code-comment">// what customer pays (+25%)</span>
+  <span class="code-key">"duration"</span>:      <span class="code-str">"31 mins"</span>,
+  <span class="code-key">"fallback"</span>:      <span class="code-val">false</span>
+}</pre>
+                  </div>
+                  <div class="vf-tags"><span class="vf-tag vft-o">Kwikpik base + 25% margin</span><span class="vf-tag vft-g">Displayed live on form</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STAGE 6 — PAYMENT ═══ -->
+      <div class="section" id="stage6">
+        <div class="section-header">
+          <div class="section-num">07</div>
+          <div>
+            <h2>Stage 6 — Payment Collection</h2>
+            <p>How Paystack collects money and how we verify it before doing anything</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.25rem">
+          <div class="card-header">
+            <div class="ch-icon chi-g"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+            <div><h3>Why We Verify Before Dispatching</h3><p>The critical security check that prevents fake orders</p></div>
+          </div>
+          <div class="card-body">
+            <div class="callout c-orange">
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <p><strong>The problem we solved:</strong> In our original design, clicking "Confirm Order" would dispatch a real Kwikpik rider even if no payment was made. Anyone could get a free delivery. Our current architecture makes it <strong>impossible</strong> to dispatch without a verified Paystack payment. The Kwikpik API is never called unless Paystack confirms the transaction as "success".</p>
+            </div>
+            <div class="vflow" style="margin-top:1.5rem">
+              <div class="vf-step">
+                <div class="vf-num vfn-o">1</div>
+                <div class="vf-body">
+                  <h3>Customer clicks "Pay Now"</h3>
+                  <p>The Paystack Popup opens directly on our page — customer never leaves swiftfifteenexpress.com. They can pay by card, bank transfer, or USSD. Our public key <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">pk_live_c8e1...</code> initialises the popup. The amount in kobo (NGN × 100) and their email are passed automatically.</p>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-n">2</div>
+                <div class="vf-body">
+                  <h3>Customer completes payment on Paystack</h3>
+                  <p>Paystack handles all payment processing securely. When payment succeeds, Paystack calls our <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">callback</code> function with a unique <strong>payment reference</strong> — a string like <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">SFX-1748123456789</code>. If the customer closes the popup without paying, nothing happens.</p>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-g">3</div>
+                <div class="vf-body">
+                  <h3>We verify the reference with Paystack's API</h3>
+                  <p>Our <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">verify-payment.js</code> Vercel function calls <code style="color:var(--orange);font-family:var(--mono);font-size:0.82rem">api.paystack.co/transaction/verify/{reference}</code> using our secret key. This is the key security step — we ask Paystack directly "did this payment actually succeed?" before we do anything.</p>
+                  <div class="code-block">
+                    <div class="code-block-header"><span class="code-lang">JSON — Paystack verification response</span></div>
+                    <pre>{
+  <span class="code-key">"status"</span>: <span class="code-val">true</span>,
+  <span class="code-key">"data"</span>: {
+    <span class="code-key">"status"</span>:   <span class="code-str">"success"</span>,   <span class="code-comment">// must be "success"</span>
+    <span class="code-key">"amount"</span>:   <span class="code-val">1750000</span>,    <span class="code-comment">// ₦17,500 in kobo</span>
+    <span class="code-key">"reference"</span>: <span class="code-str">"SFX-1748123456789"</span>,
+    <span class="code-key">"customer"</span>: {
+      <span class="code-key">"email"</span>: <span class="code-str">"customer@email.com"</span>
+    }
+  }
+}</pre>
+                  </div>
+                </div>
+              </div>
+              <div class="vf-step">
+                <div class="vf-num vfn-p">4</div>
+                <div class="vf-body">
+                  <h3>Only after "success" — Kwikpik dispatch fires</h3>
+                  <p>If Paystack returns <code style="color:#4ade80;font-family:var(--mono);font-size:0.82rem">"status": "success"</code>, the same Vercel function immediately calls Kwikpik to create the delivery. If Paystack returns anything other than success, dispatch is blocked and an alert is sent to our team.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ STAGE 7 — DISPATCH ═══ -->
+      <div class="section" id="stage7">
+        <div class="section-header">
+          <div class="section-num">08</div>
+          <div>
+            <h2>Stage 7 — Kwikpik Rider Dispatch</h2>
+            <p>How the order is placed on Kwikpik and what comes back</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.25rem">
+          <div class="card-header">
+            <div class="ch-icon chi-o"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+            <div><h3>What We Send to Kwikpik</h3><p>The exact payload sent to /partners/requests/initiate</p></div>
+          </div>
+          <div class="card-body">
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">JSON — Kwikpik dispatch payload</span></div>
+              <pre>{
+  <span class="code-key">"vehicleType"</span>:           <span class="code-str">"motorcycle"</span>,
+  <span class="code-key">"pickupLocation"</span>: {
+    <span class="code-key">"latitude"</span>:  <span class="code-val">6.5974061</span>,         <span class="code-comment">// from Google Maps geocoding</span>
+    <span class="code-key">"longitude"</span>: <span class="code-val">3.3548596</span>,
+    <span class="code-key">"address"</span>:   <span class="code-str">"12 Allen Avenue, Ikeja, Lagos"</span>
+  },
+  <span class="code-key">"deliveryLocation"</span>: {
+    <span class="code-key">"latitude"</span>:  <span class="code-val">6.448041</span>,
+    <span class="code-key">"longitude"</span>: <span class="code-val">3.480237</span>,
+    <span class="code-key">"address"</span>:   <span class="code-str">"10 Admiralty Way, Lekki Phase 1"</span>
+  },
+  <span class="code-key">"senderName"</span>:            <span class="code-str">"Emeka Okafor"</span>,
+  <span class="code-key">"senderEmail"</span>:           <span class="code-str">"emeka@business.com"</span>,
+  <span class="code-key">"senderPhoneNumber"</span>:     <span class="code-str">"08012345678"</span>,
+  <span class="code-key">"recipientName"</span>:         <span class="code-str">"Chidi Nwosu"</span>,
+  <span class="code-key">"recipientPhoneNumber"</span>:  <span class="code-str">"08098765432"</span>,
+  <span class="code-key">"description"</span>:           <span class="code-str">"2 pairs of shoes in a cardboard box"</span>,
+  <span class="code-key">"itemCategory"</span>:          <span class="code-str">"general"</span>,
+  <span class="code-key">"itemValue"</span>:             <span class="code-val">50000</span>,
+  <span class="code-key">"itemWeight"</span>:            <span class="code-val">3</span>,             <span class="code-comment">// kg — converted from weight range</span>
+  <span class="code-key">"insured"</span>:               <span class="code-val">false</span>,
+  <span class="code-key">"itemQuantity"</span>:          <span class="code-val">1</span>
+}</pre>
+            </div>
+            <div class="callout c-green" style="margin-top:1rem">
+              <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              <p>Kwikpik responds with a unique <strong>request ID</strong> (<code style="font-family:var(--mono);font-size:0.82rem">result.id</code>) which we use to build the tracking URL: <code style="font-family:var(--mono);font-size:0.82rem">kwikpik.io/track/{id}</code>. This tracking URL is sent back to the browser, shown on the success screen, and logged to Google Sheets so Make.com can SMS it to the recipient.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-header">
+              <div class="ch-icon chi-g"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/></svg></div>
+              <div><h3>Dispatch Success Flow</h3><p>What happens when everything works</p></div>
+            </div>
+            <div class="card-body" style="font-size:0.85rem">
+              <div style="display:flex;flex-direction:column;gap:0.6rem">
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(74,222,128,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:#4ade80;font-weight:700">1</div><p style="color:rgba(255,255,255,0.65)">Paystack confirms payment ✓</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(74,222,128,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:#4ade80;font-weight:700">2</div><p style="color:rgba(255,255,255,0.65)">Kwikpik assigns rider ✓</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(74,222,128,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:#4ade80;font-weight:700">3</div><p style="color:rgba(255,255,255,0.65)">Tracking URL returned</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(74,222,128,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:#4ade80;font-weight:700">4</div><p style="color:rgba(255,255,255,0.65)">All data + tracking URL sent to Make.com</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(74,222,128,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:#4ade80;font-weight:700">5</div><p style="color:rgba(255,255,255,0.65)">Google Sheets row logged</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(74,222,128,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:#4ade80;font-weight:700">6</div><p style="color:rgba(255,255,255,0.65)">SMS with tracking link sent to recipient</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(74,222,128,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:#4ade80;font-weight:700">7</div><p style="color:rgba(255,255,255,0.65)">Success screen shows live tracking button</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="ch-icon chi-o"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+              <div><h3>Dispatch Fallback Flow</h3><p>When Kwikpik dispatch fails after payment</p></div>
+            </div>
+            <div class="card-body" style="font-size:0.85rem">
+              <div style="display:flex;flex-direction:column;gap:0.6rem">
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(232,98,10,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:var(--orange);font-weight:700">1</div><p style="color:rgba(255,255,255,0.65)">Paystack confirms payment ✓</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(232,98,10,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:var(--orange);font-weight:700">2</div><p style="color:rgba(255,255,255,0.65)">Kwikpik dispatch fails (wallet empty, API error)</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(232,98,10,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:var(--orange);font-weight:700">3</div><p style="color:rgba(255,255,255,0.65)">Customer still sees "Payment Confirmed" screen</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(232,98,10,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:var(--orange);font-weight:700">4</div><p style="color:rgba(255,255,255,0.65)">WhatsApp button shown — customer confirms manually</p></div>
+                <div style="display:flex;gap:10px;align-items:flex-start"><div style="width:22px;height:22px;background:rgba(232,98,10,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.7rem;color:var(--orange);font-weight:700">5</div><p style="color:rgba(255,255,255,0.65)">Team manually dispatches on Kwikpik dashboard</p></div>
+                <div class="callout c-orange" style="margin-top:0.5rem">
+                  <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <p><strong>Most common cause:</strong> Kwikpik wallet ran out of funds. Always keep ₦50,000+ loaded.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ DATA REFERENCE ═══ -->
+      <div class="section" id="data">
+        <div class="section-header">
+          <div class="section-num">09</div>
+          <div>
+            <h2>Complete Data Reference</h2>
+            <p>Every field sent to Make.com after a completed order</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead>
+                <tr><th>Field Name</th><th>Example Value</th><th>Source</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Order_ID</td><td>SFX-1748123456789</td><td>Auto-generated at payment time</td></tr>
+                <tr><td>Submitted_At</td><td>2026-06-01T10:23:45.000Z</td><td>Auto timestamp</td></tr>
+                <tr><td>First_Name</td><td>Emeka</td><td>Order form Page 1</td></tr>
+                <tr><td>Last_Name</td><td>Okafor</td><td>Order form Page 1</td></tr>
+                <tr><td>Phone_Number</td><td>08012345678</td><td>Order form Page 1</td></tr>
+                <tr><td>Email_Address</td><td>emeka@business.com</td><td>Order form Page 1</td></tr>
+                <tr><td>Business_Name</td><td>Emeka's Fashion</td><td>Order form Page 1</td></tr>
+                <tr><td>Pickup_Address</td><td>12 Allen Avenue, Ikeja</td><td>Order form Page 2</td></tr>
+                <tr><td>Pickup_City</td><td>Lagos</td><td>Order form Page 2</td></tr>
+                <tr><td>Pickup_Date</td><td>2026-06-01</td><td>Order form Page 2</td></tr>
+                <tr><td>Pickup_Time</td><td>10:00am – 12:00pm</td><td>Order form Page 2</td></tr>
+                <tr><td>Recipient_Name</td><td>Chidi Nwosu</td><td>Order form Page 3</td></tr>
+                <tr><td>Recipient_Phone</td><td>08098765432</td><td>Order form Page 3</td></tr>
+                <tr><td>Delivery_Address</td><td>10 Admiralty Way, Lekki</td><td>Order form Page 3</td></tr>
+                <tr><td>Delivery_State</td><td>Lagos</td><td>Order form Page 3</td></tr>
+                <tr><td>Delivery_Type</td><td>Same-day Lagos</td><td>Order form Page 3</td></tr>
+                <tr><td>Package_Type</td><td>Small Parcel</td><td>Order form Page 4</td></tr>
+                <tr><td>Package_Weight</td><td>1–5kg</td><td>Order form Page 4</td></tr>
+                <tr><td>Package_Description</td><td>2 pairs of shoes in a box</td><td>Order form Page 4</td></tr>
+                <tr><td>Declared_Value_NGN</td><td>50000</td><td>Order form Page 4</td></tr>
+                <tr><td>Special_Handling</td><td>Fragile, Keep Dry</td><td>Order form Page 4</td></tr>
+                <tr><td>Kwikpik_Base_NGN</td><td>13975</td><td>Kwikpik API response</td></tr>
+                <tr><td>Amount_NGN</td><td>17500</td><td>Kwikpik base + 25% margin</td></tr>
+                <tr><td>Launch_Discount</td><td>20% / None</td><td>Auto — date check</td></tr>
+                <tr><td>Payment_Method</td><td>Paystack</td><td>Auto</td></tr>
+                <tr><td>Paystack_Reference</td><td>SFX-1748123456789</td><td>Paystack callback</td></tr>
+                <tr><td>Payment_Verified</td><td>Yes</td><td>Paystack verify API</td></tr>
+                <tr><td>Kwikpik_ID</td><td>3fa85f64-5717-4562-b3fc</td><td>Kwikpik dispatch response</td></tr>
+                <tr><td>Tracking_URL</td><td>kwikpik.io/track/3fa85f64</td><td>Kwikpik dispatch response</td></tr>
+                <tr><td>Dispatch_Status</td><td>success / failed</td><td>Kwikpik dispatch response</td></tr>
+                <tr><td>Status</td><td>Paid & Dispatched</td><td>Auto — set by result</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /page-layout -->
+</div><!-- /wrap -->
+
+<footer>
+  Swift-Fifteen Express — System Architecture v1.0 &nbsp;·&nbsp; Internal Use Only &nbsp;·&nbsp; "Where Speed Meets Safety"
+</footer>
+
+<script>
+// Sidebar active state on scroll
+const sections = document.querySelectorAll('.section[id]');
+const navItems = document.querySelectorAll('.sn-item');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.getAttribute('id');
+  });
+  navItems.forEach(n => {
+    n.classList.toggle('active', n.getAttribute('href') === '#' + current);
+  });
+});
+
+// Smooth scroll nav
+navItems.forEach(item => {
+  item.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(item.getAttribute('href'));
+    if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+</script>
+</body>
+</html>
